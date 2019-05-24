@@ -360,6 +360,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
         else:
             self._error = mycb.get_error()
         #
+        mycb.close()
         return output_file
     #-------------------------------------------------------------------------------------
 
@@ -445,6 +446,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
         #
         tmpf = str(uuid.uuid4())
         res_file = os.path.join(self.tmpDir, tmpf + '.htm')
+        b_with_qml  = False
         self._error = ''
 
         self.the_layer = self.parameterAsRasterLayer(parameters, self.THE_LAYER, context)
@@ -510,6 +512,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
                 qml_file = self._check_sidecar(self.the_layer)
                 if qml_file:
                     self._error = ''
+                    b_with_qml = True
                     mycb = bcColorBar(qml_file, '', **self.dico)
                     if mycb.get_init_state():
                         output_file = self._continue_proc(mycb, ori, labboth, output_file)
@@ -519,11 +522,11 @@ class bcCBarAlgorithm(QgisAlgorithm):
                     # Not properly styled and no qml side-car
                     self._error = mycb.get_error() + self._the_strings[8]
         #
-        mycb.close()
-        try:
-            os.remove(qml_file)
-        except:
-            pass
+        if not b_with_qml:
+            try:
+                os.remove(qml_file)
+            except:
+                pass
 
         if self._error != '':
             fil = self._create_HTML(res_file)

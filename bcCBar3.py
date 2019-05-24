@@ -328,7 +328,7 @@ class bcColorBar():
         #
         if not isfloat(L):
             L = defaut
-        if not (boundMin < float(L) < boundMax):
+        if not (boundMin <= float(L) <= boundMax):
             L = defaut
         #
         return float(L)
