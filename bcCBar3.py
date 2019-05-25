@@ -20,8 +20,10 @@
 
  Custom colour scalebar using maptplotlib
 """
-
+from importlib import reload
 import matplotlib as mpl
+mpl.use('agg')
+reload(mpl)
 mpl.use('agg')
 
 import os
@@ -877,7 +879,7 @@ class bcColorBar():
                         transform           = cax.transData)
                 if i == 0:
                     plt.draw()
-                    tbb = ti.get_window_extent()
+                    tbb = ti.get_window_extent(self.fig.canvas.get_renderer())
                     tca = inva.transform([[tbb.x0, tbb.y0],[tbb.x1, tbb.y1]])
                     tl, tb, tw, th = self._get_bounds(tca)
                 ym += th * 1.15

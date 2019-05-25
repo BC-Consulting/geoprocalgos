@@ -463,7 +463,8 @@ class bcCBarAlgorithm(QgisAlgorithm):
 
         output_file = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
         if (self._default_output in output_file) or (output_file == ''):
-            output_file = os.path.join(self.tmpDir, tmpf)
+            res_file = os.path.splitext(os.path.split(self.the_layer.source())[1])[0]
+            output_file = os.path.join(self.tmpDir, res_file)
         else:
             output_file = os.path.splitext(output_file)[0]
 

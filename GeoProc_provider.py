@@ -29,7 +29,7 @@ __revision__ = '$Format:%H$'
 import os
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsProcessingProvider
-from .bcCBar_algorithm import bcCBarAlgorithm
+#from .bcCBar_algorithm import bcCBarAlgorithm
 from .bcSaveqml_algorithm import bcSaveqmlAlgorithm
 
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
@@ -42,7 +42,7 @@ class geoprocProvider(QgsProcessingProvider):
         super().__init__()
 
         # Load algorithms
-        self.alglist = [bcCBarAlgorithm(),
+        self.alglist = [    #bcCBarAlgorithm(),
                         bcSaveqmlAlgorithm()]
     #-------------------------------------------------------------------------------------
 
