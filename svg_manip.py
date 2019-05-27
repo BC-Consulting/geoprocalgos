@@ -63,19 +63,18 @@ import os, codecs, re
 import datetime
 
 try:
-    from .utils import get_dom, get_svg_header, bc_prettify_txt
-except ModuleNotFoundError:
-    raise
-except:
     from utils import get_dom, get_svg_header, bc_prettify_txt
+except:
+    from .utils import get_dom, get_svg_header, bc_prettify_txt
+#=========================================================================================
 
 class bc_svg():
     ''' Class to resize a svg file created with bcCBar. '''
 
-    dico_cmd = {}
+    _dico_cmd = {}
 
-    the_strings = ["ERROR: Cannot parse the svg file!", 
-                   "ERROR: Cannot save svg to original loatation!"]
+    _the_strings = {"E_NOPARSE":"ERROR: Cannot parse the svg file!",
+                   "E_NOSAVE":"ERROR: Cannot save svg to original loatation!"}
 
     def __init__(self, the_svg_file):
         ''' Initialise the process: read the svg into a dom object. '''
@@ -105,11 +104,11 @@ class bc_svg():
             gs = dom.find('g', {'id':'matplotlib.axis_2'})
             gs.unwrap()
         except:
-            self.err = self.the_strings[0]
+            self.err = self._the_strings["E_NOPARSE"]
     #-------------------------------------------------------------------------------------
 
     def _format_id(self, L):
-        ''' Put the id attribute in front of all others. '''
+        ''' Put the id attribute in front of all others, for paths in defs tag. '''
         #
         oattr = ''
         for a in L.attrs:
@@ -121,10 +120,10 @@ class bc_svg():
                     ar = L['d'].split(' ')
                     for i in range(len(ar)):
                         if ar[i] != '' and ar[i][0] > chr(64):
-                            if ar[i] not in self.dico_cmd:
-                                self.dico_cmd[ar[i]] = 1
+                            if ar[i] not in self._dico_cmd:
+                                self._dico_cmd[ar[i]] = 1
                             else:
-                                self.dico_cmd[ar[i]] += 1
+                                self._dico_cmd[ar[i]] += 1
         return '<path id="' + attr0 + '"' + oattr + '/>'
     #-------------------------------------------------------------------------------------
 
@@ -376,7 +375,7 @@ class bc_svg():
         self. vb1 = '%0.6f %0.6f %0.6f %0.6f' % (0., 0., xmax-xmin, ymax-ymin)
         # Global translate to get the scalebar into the view box
         self.trans = 'translate(%0.6f %0.6f)' % (-xmin, -ymin)
-        
+
 #        print('xmax', xmax, 'xmin', xmin, 'ymax', ymax, 'ymin', ymin)
 #        print('x0 0.0 y0 0.0' 'w1', self.w1, 'h1', self.h1)
 #        print('w', self.w, 'h', self.h, 'vbox', self.vb)
@@ -410,26 +409,8 @@ class bc_svg():
                 fo.write('  </g>\n')
                 fo.write('</svg>\n')
         except:
-            self.err = self.the_strings[1]
+            self.err = self._the_strings["E_NOSAVE"]
             return False
         #
         return True
 #=========================================================================================
-
-# Remove for production....
-if __name__ == '__main__':
-
-    # Testing
-
-    the_dir = r'E:\Dev\bcc_QGIS_Plugins\git\bccscbar\dev\qml-examples\test'
-#    the_file = 'v3-Discrete_EI-15-hTn-02 - Copy.svg'
-    the_file = 'v3-Discrete_EI-15-vTn-02 - Copy.svg'
-    my_svg = bc_svg(os.path.join(the_dir, the_file))
-
-    if my_svg.is_init():
-        if not my_svg.auto_process():
-            print(my_svg.get_error())
-        else:
-            print('All ok!!')
-    else:
-        print(my_svg.get_error())

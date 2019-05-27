@@ -103,9 +103,26 @@ def bc_prettify_txt(sto):
         else:
             st += ast + '\n'
     #
-    return st
+    # Try to overcome the svg-matplotlib problem...
+    arst = st.split('\n')
+    for i, a in enumerate(arst):
+        if (('<path' in a) and ('fill:none' not in a) and ('stroke:' not in a) and
+           ('fill:' in a)):
+            i1 = a.find('style') + 7  # position of 1st character after: style="
+            i2 = a.find('"', i1)      # position of 1st " after style="
+            stroke = ''
+            arstyle = a[i1:i2].split(';')
+            for ass in arstyle:
+                if 'fill:' in ass:
+                    stroke = 'stroke:' + ass.split(':')[1] + ';'
+                    break
+            arstyle[-1] = stroke   # take advantage that arstyle[-1] = '' because style
+                                   #  string is always terminated with ;
+            arst[i] = a[:i1] + ';'.join(arstyle) + a[i2:]  # reconstruct string
+    #
+    return '\n'.join(arst)
 #-----------------------------------------------------------------------------------------
-    
+
 def get_svg_header():
     ''' SVG header for a bcCBar object. '''
     #

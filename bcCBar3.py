@@ -20,26 +20,40 @@
 
  Custom colour scalebar using maptplotlib
 """
-from importlib import reload
-import matplotlib as mpl
-mpl.use('agg')
-reload(mpl)
-mpl.use('agg')
+#   Test for dependencies -------------------------------------
+try:
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import numpy as np
+    from matplotlib.font_manager import FontProperties
+    import matplotlib.pyplot as plt
+    is_mpl_available = True
+except ImportError:
+    is_mpl_available = False
+try:
+    from bs4 import BeautifulSoup
+    is_bs4_available = True
+except ImportError:
+    is_bs4_available = False
+#--------------------------------------------------------------
 
-import os
-from xml.dom import minidom
-import numpy as np
-from PIL import Image
-from matplotlib.font_manager import FontProperties
-import matplotlib.pyplot as plt
 plt.ioff()
 
+import os, re
+from xml.dom import minidom
+from PIL import Image
+
 try:
-    from .svg_manip import bc_svg
-except ModuleNotFoundError:
-    raise
-except:
     from svg_manip import bc_svg
+except:
+    from .svg_manip import bc_svg
+#=========================================================================================
+
+class bcCBarError( RuntimeError ):
+    ''' Custom error generator for unsatisfied dependencies. '''
+    #
+    def message(self):
+        return self.args[0] if len(self.args) > 0 else "Exception"
 #=========================================================================================
 
 def isfloat(value):
@@ -85,19 +99,28 @@ class bcColorBar():
      -------------------------------------------------------------------------------------
     '''
     #
-    # Error strings
-    the_strings = ["ERROR: Wrong input file (expected a QGIS V3.x .QML file)!",
-                   "ERROR: Wrong QML version %d. Expected 3!",
-                   "ERROR: Not a one-band raster!",
-                   "ERROR: Not enough colours. Minimum 2!",
-                   "ERROR: Wrong input file!",
-                   "ERROR: No output file specified!",
-                   "ERROR: No input file specified!",
-                   "WARNING: Cannot create /png directory. Save to /temp!",
-                   "ERROR: Cannot save to svg file after processing!",
-                   "ERROR: Cannot save to png file!",
-                   "ERROR: This raster is not properly styled!"]
+    # Info strings: must be public
+    the_strings = {"E_BADFIL":"ERROR: Wrong input file (expected a QGIS V3.x .QML file)!",
+                   "E_BADQML":"ERROR: Wrong QML version %d. Expected 3!",
+                   "E_NOONEBAND":"ERROR: Not a one-band raster!",
+                   "E_NOCOL":"ERROR: Not enough colours. Minimum 2!",
+                   "E_BADIFIL":"ERROR: Wrong input file!",
+                   "E_NOOUTF":"ERROR: No output file specified!",
+                   "E_NOINF":"ERROR: No input file specified!",
+                   "E_SAVES":"ERROR: Cannot save to svg file after processing!",
+                   "E_SAVEP":"ERROR: Cannot save to png file!",
+                   "E_NOSTYLE":"ERROR: This raster is not properly styled!",
+                   "W_DIRERR":"WARNING: Cannot create /png directory. Save to /temp!",
+                   "XTRA_PARAMS":"Additional parameters:",
+                   "EM":"and"}
+    # Additional parameters. Must be public for internationalisation
+    xtra = {'title_align':'Title alignment', 'units_align':'Sub-title alignment',
+             'mathfont_set':'Mathfont set', 
+             'ticks_font_properties':'Ticks label font properties',
+             'title_font_properties':'Title font properties', 
+             'units_font_properties':'Sub-title font properties'}
 
+    #-----------------------------------------------------------------
     # Where to put the ticks/labels
     Oo = {  'vertical': ['none', 'left', 'right'],
           'horizontal': ['none', 'top', 'bottom']}
@@ -157,7 +180,7 @@ class bcColorBar():
         #
         # Do we have a file to act on?
         if the_file.strip() == '':
-            self.error  = self.the_strings[6]
+            self.error  = self.the_strings["E_NOINF"]
             self.isinit = False
 
         else:
@@ -208,18 +231,22 @@ class bcColorBar():
             offset = self._get_float(L, 0., -100., 100.)
             #
             # Other class variables
-            self.set_display = True     # True to show the colour scalebar
-            self.dpi    = 300
-            self.nMode  = 0
-            self.cm     = 0
+            self.set_display = False     # True to show the colour scalebar
+            self.dpi         = 300
+            self.nMode       = 0
+            self.cm          = 0
             #
-            self.arV    = None
-            self.arL    = None
-            self.ticksV = None
-            self.ticksL = None
-            self.vramp  = None
-            self.cramp  = None
-            self.fig    = None
+            self.arV         = None
+            self.arL         = None
+            self.ticksV      = None
+            self.ticksL      = None
+            self.vramp       = None
+            self.cramp       = None
+            self.fig         = None
+            self.ticksep     = ticksep
+            self.offset      = offset
+            self.breversed   = breversed
+            self.isxtra      = False
             #
             # Read and parse qml file
             #  results are array of values, labels & colours, and type of colour scalebar
@@ -235,6 +262,8 @@ class bcColorBar():
                     self.cramp = self.cramp[::-1]
 
                 if ticksep > 1:
+                    if self.nMode !=1:
+                        offset = 0.
                     #  draw tick every    n   values
                     msk = [True if ((offset + s) % ticksep) == 0 else False 
                                                             for s in range(len(self.arL))]
@@ -253,7 +282,7 @@ class bcColorBar():
             self.ticks_font_properties = FontProperties()
             self.title_font_properties = FontProperties()
             self.units_font_properties = FontProperties()
-            self.mathfont_set = 'cm'
+            self.mathfont_set = 'dejavusans'
 
             self.title_font_properties.set_family('sans-serif')
             self.title_font_properties.set_size(self.tfont)
@@ -267,8 +296,10 @@ class bcColorBar():
             self.ticks_font_properties.set_size(self.fntSize)
     #-------------------------------------------------------------------------------------
 
-    def _check_font_properties(self, font, weight='normal'):
+    def _check_font_properties(self, font0, weight='normal'):
         ''' Check if the given font properties are valid. '''
+        #
+        font = self._get_dict(font0)
         #
         fontp = FontProperties()
         #      6 parameters in a font properties dictionary
@@ -325,6 +356,18 @@ class bcColorBar():
         return fontp
     #-------------------------------------------------------------------------------------
 
+    def _fnt_to_str(self, fp):
+        ''' Return a string from font properties. '''
+        #
+        v = 'Family: ' + str(fp.get_family())
+        v += ', Size: ' + str(fp.get_size())
+        v += ', Weight: ' + str(fp.get_weight())
+        v += ', Variant: ' + str(fp.get_variant())
+        v += ', Style: ' + str(fp.get_style())
+        v += ', Stretch: ' + str(fp.get_stretch())
+        return v
+    #-------------------------------------------------------------------------------------
+
     def _get_float(self, L, defaut, boundMin, boundMax):
         ''' Make sure L is a float boundMin < L < boundMax or return default if not. '''
         #
@@ -347,6 +390,51 @@ class bcColorBar():
             w = bb[1][0] - bb[0][0]
             h = bb[1][1] - bb[0][1]
             return [bb[0][0], bb[0][1], w, h]
+    #-------------------------------------------------------------------------------------
+
+    def _get_colour(self, v):
+        ''' Convert to colour. '''
+        #
+        #v="255,255,212,255"
+        return [float(x) / 255. for x in v.split(',')]
+    #-------------------------------------------------------------------------------------
+
+    def _get_dict(self, dic):
+        ''' Create and return a dictionary for a dict-like string. One-level only.
+            Any dict-like string as value of top level key is kept as is.
+        '''
+        #
+        dic = dic.strip()
+        print(dic)
+        if dic[0] != '{' or dic[-1] != '}':
+            return {}
+        n1, n2 = dic.count('{'), dic.count('}')
+        if n1 != n2:
+            return {}
+        #
+        q = ''.join([str(c) for c in dic])
+        q = re.sub(r',\s*', ',', q)
+        q = q[1:-1].replace('"', '').replace("'","")
+        print(q)
+        if n1 == 1:
+            q = q.split(',')
+            return {kv.split(':')[0]:kv.split(':')[1] for kv in q if kv != ''}
+        else:
+            n1 -= 1
+            ar = {}
+            for n in range(n1):
+                i1 = q.find('{')
+                i2 = q.find('}', i1) + 1
+                k = 'BCCC_%05d' % n 
+                ar[k] = q[i1:i2]
+                q = q[:i1] + k + q[i2:] 
+            q = q.split(',')
+            a = {kv.split(':')[0]:kv.split(':')[1] for kv in q if kv != ''}
+            for ka in a:
+                for k in ar:
+                    if k in a[ka]:
+                        a[ka] = a[ka].replace(k, ar[k])
+            return a
     #-------------------------------------------------------------------------------------
 
     def _format_label(self, t):
@@ -374,23 +462,23 @@ class bcColorBar():
             dom = minidom.parse(the_file)
             tag = dom.getElementsByTagName("qgis")[0]
         except:
-            self.error = self.the_strings[0]
+            self.error = self.the_strings["E_BADFIL"]
             return False
         #
         if tag.hasAttribute('version'):
             v = int(tag.getAttribute('version').strip()[0])
             if v != 3: #Version 3
-                self.error = self.the_strings[1] % v
+                self.error = self.the_strings["E_BADQML"] % v
                 return False
         #
         tag = dom.getElementsByTagName("rasterrenderer")[0]
         rtype = tag.getAttribute('type')
         if not tag.hasAttribute('band'):
-            self.error = self.the_strings[10]
+            self.error = self.the_strings["E_NOSTYLE"]
             return False            
         rband = tag.getAttribute('band')
         if int(rband) > 1:
-            self.error = self.the_strings[2]
+            self.error = self.the_strings["E_NOONEBAND"]
             return False
         #--------------------------------------
 
@@ -419,71 +507,35 @@ class bcColorBar():
             elif ar == "EXACT":
                 nMode = 2
             else:
-                self.error = self.the_strings[3]
+                self.error = self.the_strings["E_NOONEBAND"]
                 return False
             #
             # 1: Continuous, 2: Equal interval, 3: Quantile
             cm = int(tag.getAttribute('classificationMode'))  
 
-        # Get original colour ramp from the dom 
-        tagcr = tag.getElementsByTagName("colorramp")[0]
-        try:
-            tagcr = tagcr.getElementsByTagName("prop")
-        except:
-            # Unhandled error: probably not a qml v3.x
-            self.error = self.the_strings[1]
-            return False
-
-        for p in tagcr:
-            if not p.hasAttribute('k'):
-                # Unhandled error: probably not a qml v3.x
-                self.error = self.the_strings[1]
-                return False
-
-            if p.getAttribute('k').lower() == 'stops':
-                c  = p.getAttribute('v')  # 0.02;70,8,92,255:0.04;71,16,99,255:...
-                ar = c.split(':')
-                n  = len(ar)
-                va = np.zeros(n, np.float32)
-                co = np.zeros((n, 4), np.float32)
-                for i, a in enumerate(ar):
-                    b = a.split(';')
-                    va[i] = b[0]
-                    c = b[1].split(',')
-                    co[i, 0] = float(c[0]) / 255.
-                    co[i, 1] = float(c[1]) / 255.
-                    co[i, 2] = float(c[2]) / 255.
-                    co[i, 3] = float(c[3]) / 255.
-                tramp = np.zeros(n + 1, np.float32)
-                for i in range(1, n):
-                    tramp[i] = (va[i - 1] + va[i]) / 2.
-                tramp[-1] = 1.0
-                break
-
         # Read colour values
         items = tag.getElementsByTagName(ntag)
         n = len(items)
         if n < 2:
-            self.error = self.the_strings[3]
+            self.error = self.the_strings["E_NOCOL"]
             return False
 
-        if nMode < 2:
-            # Number of colours is one less than number of ticks
+        if nMode != 1:
+            # Discrete: Number of colours is one less than number of ticks
             arColo = np.zeros((n, 4), np.float32)
             arV    = np.zeros(n + 1, np.float32)
-            arL    = np.array(['' * 16] * (n + 1), dtype="<U16")
-            if rmin != 'min':
-                arV[0] = float(rmin)
-            arL[0] = self._format_label(rmin)
+            tL     = np.array(['' * 16] * (n + 1), dtype="<U16")
             ioff = 1
         else:
+            # Otherwise: Number of colours = number of ticks
             arColo = np.zeros((n, 4), np.float32)
             arV    = np.zeros(n, np.float32)
-            arL    = np.array(['' * 16] * n, dtype="<U16")
+            tL     = np.array(['' * 16] * n, dtype="<U16")
             ioff = 0
 
-        # Get each colour (RGBA) and its value/label (arV/arL)
+        # Build colour ramp
         for nC, a in enumerate(items):
+            #Get each colour (RGBA) and its value/label (arV/tL)
             if a.hasAttribute('color'):
                 colo = a.getAttribute('color')
                 alph = a.getAttribute('alpha')
@@ -493,37 +545,37 @@ class bcColorBar():
                 arColo[nC, 1] = float(int(colo[3:5],16)) / 255. # green   [0, 1]
                 arColo[nC, 2] = float(int(colo[5:],16)) / 255.  # blue    [0, 1]
                 arColo[nC, 3] = float(alph) / 255.              # alpha   [0, 1]
-                if valu == 'inf':                                 # infinity...
-                    if rmax != 'rmax':
+                if valu == 'inf': # infinity...
+                    if rmax != 'max':
                         valu = rmax
                     else:
-                        valu = '%.0f' % (2 * arV[nC - 1] - arV[nC -2] + .5)
+                        valu = 2 * arV[nC - 1] - arV[nC -2]
                     labl = rmax
-                arV[nC + ioff] = float(valu)                    # value (position of...)
-                arL[nC + ioff] = self._format_label(labl)        # label (...what is shown)
+                arV[nC + ioff] = float(valu)                  # value: colour upper border
+                tL[nC + ioff]  = self._format_label(labl)     # label: what is shown
             else:
                 # Unhandled error
-                self.error = self.the_strings[4]
+                self.error = self.the_strings["E_BADIFIL"]
                 return False
 
-        if rmin == 'min' and nMode < 2:
+        # Lowest colour border
+        if nMode == 0:
+            # Discrete
+            arV[0] = rmin
+            tL[0]  = self._format_label(rmin)
+        elif nMode != 1:
+            # Exact/Paletted
             arV[0] = '%.0f' % (2 * arV[1] - arV[2] - .5)
 
-        # map ramp values to data values
-        va = tramp * (arV[-1] - arV[0]) + arV[0]
-
-        # Format data according to colour scheme
-        #---------------------------------------
-
+        # Adjust for bad palettes
         if cm == 3:
             # Quantile: deal with badly designed colour ramp (remove colours)
-            b = True
             msk = []
             for i in range(1, nC):
                 if arV[i] == arV[i - 1]:
                     msk.append(i - 1)
             arV = np.delete(arV, msk)
-            arL = np.delete(arL, msk)
+            tL = np.delete(tL, msk)
             arColo = np.delete(arColo, msk, axis=0)
             nC = len(arV) - 1
 
@@ -532,40 +584,69 @@ class bcColorBar():
             # correct to: min, half, max
             if arV[0] == arV[1]:
                 arV[1] = (arV[0] + arV[2]) / 2.
-                arL[1] = self._format_label(arV[1])
+                tL[1] = self._format_label(arV[1])
 
-        if nMode > 1:
+        #-------------------------------------------------------------------------
+        # Now, define tick locations
+        vmin = arV.min()
+        vmax = arV.max()
+        if nMode < 2:
+            # Linear and Discrete: ticks position = colours border
+            tV = arV
+        else:
             # EXACT or PALETTED
             # values = index. Colour scalebar is based on index
             # labels are what is read from file
             # Here number of colours = number of ticks
             # ticks plot in the middle of the colour box
-            if cm != 3:
-                v5 = 2 * arV[-1] - arV[-2]
-            else:
-                m = (arV[1:] - arV[:-1]).mean()
-                v5 = arV[-1] + m
-            va = np.hstack((arV, np.array([v5,])))
-            co = arColo
-            # center arV on colour, but keep arL as is
-            ar = [(arV[i] + arV[i - 1]) / 2. for i in range(1, len(arV))]
-            ar.append((v5 + arV[-1]) / 2.)
-            arV = np.array(ar)
+            # Adjust ticks position, but ticks label stay the same.
+            tV = np.array([(arV[i] + arV[i - 1]) / 2. for i in range(1, len(arV))])
+            tL = tL[1:]
         #
-        # Otherwise
-        # ticks plot at the edge of the colour box. Number of ticks = number of colours +1
-        #
-        elif (cm == 1 and nC > n) or (nMode != 1):
-            # use colour palette instead of the colour ramp because colour palette has
-            # more colours than the colour ramp!
-            co = arColo
-            va = arV
+        # Normalise ticks position to [0, 1]
+        tV = (tV - vmin) / (vmax - vmin)
+
+        #-------------------------------------------------------------------------
+        # Finally, create the colour ramp to use
+        nC += 1
+        if nMode == 1:
+            # Linear - Nvalues = Ncolors
+            # ----------------
+            # ||||||||||||||||   many colours
+            # ----------------
+            # |  |  |  |  |  |   v
+            #                                                          dummy, but large...
+            rmp  = mpl.colors.LinearSegmentedColormap.from_list("rmpL", arColo, N = 512)
+            rgba = rmp(np.linspace(0., 1., 512))
+            norm = np.linspace(0., 1., 512)
+
+        elif nMode == 0:        
+            # Discrete - Nvalues = Ncolors +1
+            #  -- -- -- -- --
+            # |  |  |  |  |  |    ncolo & ncolo+1 stops
+            #  -- -- -- -- --
+            # |  |  |  |  |  |   v=>ncolo+1
+            #                                                           number of colors
+            rmp  = mpl.colors.LinearSegmentedColormap.from_list("rmpD", arColo, N = nC)
+            rgba = rmp(np.linspace(0., 1., nC))
+            norm = np.linspace(0., 1., nC+1)
+
+        else:
+            # Exact/Palette - Nvalues = Ncolors (but offset)
+            #  --- --- --- --- ---
+            # |   |   |   |   |   |    ncolo & ncolo+1 stops
+            #  --- --- --- --- ---
+            #   |   |   |   |   |      v=>ncolo
+            #                                                          number of colors
+            rmp = mpl.colors.LinearSegmentedColormap.from_list("rmpE", arColo, N = nC)
+            rgba = rmp(np.linspace(0., 1., nC))
+            norm = np.linspace(0., 1., nC+1)
 
         # Set colour info
-        self.vramp = va
-        self.cramp = co
-        self.arV   = arV
-        self.arL   = arL
+        self.vramp = norm         # Normalised colours edge position to [0, 1]
+        self.cramp = rgba
+        self.arV   = tV
+        self.arL   = tL
         self.nMode = nMode
         self.cm    = cm
         self.error = ''
@@ -670,7 +751,7 @@ class bcColorBar():
             new_image = Image.fromarray(img_new)
             new_image.save(imgF)
         except:
-            self.error = self.the_strings[9]
+            self.error = self.the_strings["E_SAVEP"]
             return False
 
         return True
@@ -697,10 +778,99 @@ class bcColorBar():
         return self.error
     #-------------------------------------------------------------------------------------
 
-    def set_extras(self, **kwargs):
-        ''' Set additional parameters to control the appearance of the colour scalebar.
+    def get_value(self, param):
+        ''' Return the value of param. '''
+        #
+        if param == 'ori':
+            return self.ori
+        elif param == 'deci':
+            return self.deci
+        elif param == 'title':
+            return self.Titre
+        elif param == 'units':
+            return self.Units
+        elif param == 'cbwh':
+            return self.cbwh
+        elif param == 'ticksep':
+            return self.ticksep
+        elif param == 'offset':
+            return self.offset
+        elif param == 'label_both':
+            return self.LabelsonBoth
+        elif param == 'label_on':
+            return self.Labelson
+        elif param == 'font_size':
+            return self.fntSize
+        elif param == 'tfont':
+            return self.tfont
+        elif param == 'ufont':
+            return self.ufont
+        elif param == 'with_png':
+            return self.b_png
+        elif param == 'border_lw':
+            return self.border_lw
+        elif param == 'divider_lw':
+            return self.divider_lw
+        elif param == 'divider_color':
+            return self.divider_color
+        elif param == 'border_color':
+            return self.border_color
+        elif param == 'title_color':
+            return self.title_color
+        elif param == 'units_color':
+            return self.units_color
+        elif param == 'breversed':
+            return self.breversed
+        elif param == 'title_align':
+            return self.title_align
+        elif param == 'units_align':
+            return self.units_align
+        elif param == 'mathfont_set':
+            return self.mathfont_set
+        elif param == 'ticks_font_properties':
+            return self._fnt_to_str(self.ticks_font_properties)
+        elif param == 'title_font_properties':
+            return self._fnt_to_str(self.title_font_properties)
+        elif param == 'units_font_properties':
+            return self._fnt_to_str(self.units_font_properties)
+        else:
+            return ''
+    #-------------------------------------------------------------------------------------
 
-            kwargs:
+    def get_params_used(self, in_file, the_params):
+        ''' Return the description and value of the parameters used. '''
+        #
+        strused = '<p>'
+        for param in sorted(the_params, key=the_params.__getitem__):
+            L = the_params[param][1] + ' = '
+            if param == 'THE_LAYER':
+                v = in_file
+            elif param == 'XTRA_PARAM':
+                L = self.the_strings['XTRA_PARAMS']
+                v = '<br/>'
+                for k, x in self.xtra.items():
+                    v += '&nbsp;' * 4 + x + ': ' + str(self.get_value(k)) + '<br/>'
+            elif param == 'OUTPUT':
+                v = self.the_cbfile
+            else:
+                # value used by bcCBar and not the one provided in input
+                v = str(self.get_value(param.lower()))
+            #
+            L = L.replace('<', '&lt;').replace('>', '&gt;')
+            v = v.replace('<', '&lt;').replace('>', '&gt;')
+            v = v.replace('&lt;br/&gt;', '<br/>')
+            strused += L + v + '<br/>'
+        #
+        if self.b_png:
+            v = self.the_cbfile[:-3] + 'png'
+            strused += ' <em>' + self.the_strings["EM"] + '</em> ' + v + '<br/>'
+        return (strused[:-5] + '</p>\n').replace('<br/>','<br/>\n')
+    #-------------------------------------------------------------------------------------
+
+    def set_extras(self, dic):
+        ''' Set additional parameters to fine-tune the appearance of the colour scalebar.
+
+            dic:
                 title_align: title text alignment one of ['center'*, 'right', 'left']
                 units_align: sub-title text alignment one of ['center'*, 'right', 'left']
       ticks_font_properties: dictionary of valid font properties for ticks label {}*
@@ -712,7 +882,8 @@ class bcColorBar():
             * default
         '''
         #
-        if not type(kwargs) is dict:
+        kwargs = self._get_dict(dic)
+        if kwargs == {}:
             return False
 
         if 'title_align' in kwargs:
@@ -734,6 +905,7 @@ class bcColorBar():
             L = kwargs['units_font_properties']
             self.units_font_properties = self._check_font_properties(L)
         #
+        self.isxtra = True
         return True
     #-------------------------------------------------------------------------------------
 
@@ -765,7 +937,6 @@ class bcColorBar():
         Titre     = self.Titre.strip()
         Units     = self.Units.strip()
         cbwh      = self.cbwh
-#        fntSize   = self.fntSize
         border_lw = self.border_lw
         border_cl = self.border_color
         div_lw    = self.divider_lw
@@ -825,7 +996,7 @@ class bcColorBar():
                             pad=1, colors=border_cl)
 
         # Draw colour scalebar
-        nC = len(cramp)
+        nC = len(vramp) - 1
         if ori == 'horizontal':
             for i in range(nC):
                 r = mpl.patches.Rectangle([vramp[i], 0.0], vramp[i+1] - vramp[i], 1.0, 
@@ -845,10 +1016,7 @@ class bcColorBar():
                                    linewidth = border_lw, edgecolor = border_cl)
         cax.add_patch(fr)
 
-        # Plot legend
-        plt.draw()
-        inva = cax.transData.inverted()                            # convert to Data space
-
+        # Plot Title and sub-title -------------------------------------------------------
         # Draw units
         if Units != '':
             ym = self._set_units(Units, cax, fontu, colo = units_cl, pad = twk)
@@ -869,20 +1037,13 @@ class bcColorBar():
                 xm = xmax
             else:
                 xm = (xmin + xmax) / 2.
-            ti = Titre.split('ÿ')
-            for i, t in enumerate(ti[::-1]):
-                ti = cax.text(xm, ym, t,
-                        horizontalalignment = self.title_align,
-                        verticalalignment   = 'bottom',
-                        fontproperties      = fontt,
-                        color               = title_cl,
-                        transform           = cax.transData)
-                if i == 0:
-                    plt.draw()
-                    tbb = ti.get_window_extent(self.fig.canvas.get_renderer())
-                    tca = inva.transform([[tbb.x0, tbb.y0],[tbb.x1, tbb.y1]])
-                    tl, tb, tw, th = self._get_bounds(tca)
-                ym += th * 1.15
+            Titre = Titre.replace('ÿ', '\n')        # use native multilines capability!!!
+            cax.text(xm, ym, Titre,
+                    horizontalalignment = self.title_align,
+                    verticalalignment   = 'bottom',
+                    fontproperties      = fontt,
+                    color               = title_cl,
+                    transform           = cax.transData)
 
         if self.set_display:
             # Show colour scalebar
@@ -900,7 +1061,7 @@ class bcColorBar():
         #
         self.error = ''
         if self.the_cbfile.strip() == '':
-            self.error = self.the_strings[5]
+            self.error = self.the_strings["E_NOOUTF"]
             return False
 
         fil = os.path.splitext(self.the_cbfile)[0]
@@ -914,7 +1075,7 @@ class bcColorBar():
         my_svg = bc_svg(imgFileV)
         if my_svg.is_init():
             if not my_svg.auto_process():
-                self.error = self.the_strings[8] + '\n' + my_svg.get_error()
+                self.error = self.the_strings["E_SAVES"] + '\n' + my_svg.get_error()
         else:
             self.error = my_svg.get_error()
 

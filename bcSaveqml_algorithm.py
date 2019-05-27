@@ -42,6 +42,8 @@ from qgis.core import (QgsProcessingUtils, QgsProcessing,
                        QgsProcessingParameterMultipleLayers)
 from processing.algs.qgis.QgisAlgorithm import QgisAlgorithm
 
+is_dependencies_satisfied = True
+
 #-----------------------------------------------------------------------------------------
 FlagsAdv = QgsProcessingParameterDefinition.FlagAdvanced
 rlayers = QgsProcessing.TypeRaster

@@ -1,6 +1,5 @@
 <h1><img src="http://www.geoproc.com/free/img/geoproc.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;geoprocAlgos</h1>
 <p>A collection of <a href="https://qgis.org/en/site/" target="_blank">QGIS</a> V3.x Processing algorithms.</p>
-<!--
 <p><img src="http://www.geoproc.com/free/img/bcCbar.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;<strong>bcCBar<sup>3</sup></strong>: Generate a coulour scalebar from a one-band raster. For use as legend in QGIS Composer.</p>
 <blockquote>
   <blockquote>
@@ -13,7 +12,6 @@
     </blockquote>
   </blockquote>
 </blockquote>
--->
 <p><img src="http://www.geoproc.com/free/img/bcSaveqml.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;<strong>bcSaveqml<sup>3</sup></strong>: Save a style file (.qml) for all selected vector and raster layers. The style file is saved as a <a href="https://en.wikipedia.org/wiki/Sidecar_file" target="_blank">sidecar</a> in the same directory of the layer file.</p>
 <blockquote>
   <blockquote>
@@ -33,4 +31,4 @@ Add "http://www.geoproc.com/free/plugins.xml" to QGIS plugin repositories source
 
 ---
 
-Last updated: 24 May 2019
+Last updated: 27 May 2019

@@ -29,21 +29,23 @@ __revision__ = '$Format:%H$'
 
 import os, codecs, uuid
 from qgis.PyQt.QtGui import QIcon
-from qgis.core import (QgsProcessingUtils,
+from qgis.core import (QgsProcessingAlgorithm,
+                       QgsProcessingUtils,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterBoolean,
+                       QgsProcessingParameterFile,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterNumber,
                        QgsProcessingParameterString,
                        QgsProcessingParameterEnum,
                        QgsProcessingParameterDefinition,
                        QgsMapLayer)
-from processing.algs.qgis.QgisAlgorithm import QgisAlgorithm
 
-try:
-    from .bcCBar3 import bcColorBar
-except ModuleNotFoundError:
-    raise
+from .bcCBar3 import bcColorBar
+
+# Check for dependencies
+from .bcCBar3 import is_bs4_available, is_mpl_available
+is_dependencies_satisfied = is_bs4_available and is_mpl_available
 
 #-----------------------------------------------------------------------------------------
 FlagsAdv = QgsProcessingParameterDefinition.FlagAdvanced
@@ -94,7 +96,7 @@ the_tags = ['colour','scale','bar','scalebar','raster','1-band','one-band','oneb
             'composer','svg','png','print','legend']
 #-----------------------------------------------------------------------------------------
 
-class bcCBarAlgorithm(QgisAlgorithm):
+class bcCBarAlgorithm(QgsProcessingAlgorithm):
     ''' Processing wrapper for the colour scale bar algorithm. '''
     #
     # Parameters used for drawing the colour scale bar
@@ -121,16 +123,40 @@ class bcCBarAlgorithm(QgisAlgorithm):
     WITH_PNG      = 'WITH_PNG'
     XTRA_PARAM    = 'XTRA_PARAM'
     OUTPUT        = 'OUTPUT'
+    DEP           = 'DEP'
 
     _default_output = 'cb.svg'
     _ori_lst = ['Vertical', 'Horizontal']
     _tick_lst = ['right', 'left', 'top', 'bottom', 'none']
 
-    _the_strings = ["ERROR: Input is not a one-band raster!",
-                    "ERROR: Cannot save .qml file in temp directory!",
-                    "Create Colour Scalebar","ERROR","Source","Result: colour scalebar",
-                    "Parameters Used", " <em>and</em> ",
-                    " And, no qml side-car found."]
+    _the_strings = {"ERR":"ERROR",
+                    "ERR_NOONEBAND":"ERROR: Input is not a one-band raster!",
+                    "ERR_NOSAVEQML":"ERROR: Cannot save .qml file in temp directory!",
+                    "ERR_NOSIDECAR":" And, no qml side-car found.",
+                    "ERR_NOQML":"ERROR: Input file is neither a raster neither a .qml!",
+                    "ERR_MPL":"ERROR: matplotlib and numpy are needed!",
+                    "ERR_BS4":"ERROR: BeautifulSoup4 and lxml are needed!",
+                    "ERR_DEP":"ERROR: Needed dependencies are not installed!",
+                    "DEP_LST":"numpy, matplotlib, BeautifulSoup4 and lxml are needed...",
+                    "CREATE_CS":"Create Colour Scalebar",
+                    "SOURCE":"Source",
+                    "RESULT":"Result: colour scalebar",
+                    "PARAMS":"Parameters Used",
+                    "COPYPASTE":"(copy and paste into Composer image source box)",
+                    "SUFFIX":'''<h5>Suffix explanation:</h5>
+                              <ul>
+                              <li>H or V: for horizontal and vertical respectively</li>
+                              <li>number: Colour interpolation: 
+                                 0: discrete, 1: linear, 2: exact and 3: paletted</li>
+                             <li>number: Colour mode: 1: Continuous, 2: Equal interval,
+                                 3: Quantile</li>
+                             <li>T or F: annotate both sides of the scalebar (T)
+                                 or not (F)</li>
+                             <li>letter: tick position: one of n (none), l (left), 
+                                 r (right), t(top) or b (bottom)</li>
+                             </ul>
+                             '''}
+
     _pstr = ['Input one-band raster', 'Scalebar orientation', 'Title', 'Sub-title',
             'Number of decimals to display', 'Colour scalebar ratio: width/length',
             'Tick separation', 'Ticks offset to arrive at nice numbers', 
@@ -145,7 +171,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
             'Dividers colour (r,g,b,a) [0., 1.] or colour name',
             'Reverse colour scalebar?', 'Output a png file as well? (SVG by default)',
             'Additional parameters. See home page for help.',
-            'Result file', 'HTML files (*.html)']
+            'Result file', 'HTML files (*.html)', 'All files (*.*)']
 
     def __init__(self):
         super().__init__()
@@ -211,6 +237,13 @@ class bcCBarAlgorithm(QgisAlgorithm):
                     self.tr(the_str),
                     optional = optional
                 )
+        elif what == 'File':
+            qparam = QgsProcessingParameterFile(
+                    param,
+                    self.tr(the_str),
+                    extension = arg[3]['ext'],
+                    optional = optional
+                )
         elif what == 'Enum':
             qparam = QgsProcessingParameterEnum(
                     param,
@@ -225,7 +258,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
                     self.tr(the_str),
                     defaultValue = arg[3]['defaultValue'],
                     optional = optional
-                )                
+                )
         elif what == 'NumberD':
             qparam = QgsProcessingParameterNumber(
                     param,
@@ -281,7 +314,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
         if flg:
             return [True, tempname]
         else:
-            return [False, self._the_strings[1]]
+            return [False, self._the_strings["ERR_NOSAVEQML"]]
     #-------------------------------------------------------------------------------------
 
     def _check_color(self, col):
@@ -323,31 +356,11 @@ class bcCBarAlgorithm(QgisAlgorithm):
             return False
     #-------------------------------------------------------------------------------------
 
-    def _params_used(self, output):
-        ''' Return the description and value of the parameters used. '''
-        #
-        strused = '<p>'
-        for param in sorted(self.the_params, key=self.the_params.__getitem__):
-            if param == 'THE_LAYER':
-                v = self.the_layer.source()
-            elif param == 'XTRA_PARAM':
-                v = str(self.xtrap)
-            elif param == 'OUTPUT':
-                v = output
-            else:
-                v = str(self.dico[param.lower()])
-            strused += self.tr(self.the_params[param][1]) + ' = ' + v + '<br/>'
-        if self.dico['with_png']:
-            v = output[:-3] + 'png'
-            strused += self.tr(self._the_strings[7]) + v + '<br/>'
-        return (strused[:-5] + '</p>\n').replace('<br/>','<br/>\n')
-    #-------------------------------------------------------------------------------------
-
     def _continue_proc(self, mycb, ori, labboth, output_file):
         ''' Continue processing. '''
         #
-        if type(self.xtrap) is dict: 
-            mycb.set_extras(**self.xtrap)
+        if self.xtrap != '':
+            mycb.set_extras(self.xtrap)
         #
         vh = '_' + self._ori_lst[ori][0] + str(mycb.nMode) + str(mycb.cm)
         self.dico['label_on'] = mycb.Labelson
@@ -364,8 +377,15 @@ class bcCBarAlgorithm(QgisAlgorithm):
         return output_file
     #-------------------------------------------------------------------------------------
 
-    def _create_HTML(self, svg_file):
+    def _create_HTML(self, svg_file, the_cb = None):
         ''' Generate an output html file showing the create colour bar (svg). '''
+        #
+        # Internationalisation
+        for k in the_cb.xtra:
+            the_cb.xtra[k] = self.tr(the_cb.xtra[k])
+        the_cb.the_strings["EM"] = self.tr(the_cb.the_strings["EM"])
+        the_cb.the_strings["XTRA_PARAMS"] = self.tr(the_cb.the_strings["XTRA_PARAMS"])
+        #-----------------------------------------------------------------------------
         #
         outputFile = os.path.splitext(svg_file)[0] + "_bcCBar-results.html"
         svg_htm = os.path.split(svg_file)[1]
@@ -382,11 +402,11 @@ class bcCBarAlgorithm(QgisAlgorithm):
             f.write('<meta http-equiv="Content-Type" content="text/html;') 
             f.write(' charset=utf-8" />\n</head>\n<body>\n')
             if self._error != '':
-                f.write('<h1>%s</h1>\n' % self.tr(self._the_strings[3]))
+                f.write('<h1>%s</h1>\n' % self.tr(self._the_strings["ERR"]))
                 f.write('<p style="color:red;">%s</p>\n' % self.tr(self._error))
             #
             else:
-                f.write('<h1>%s</h1>\n' % self.tr(self._the_strings[5]))
+                f.write('<h1>%s</h1>\n' % self.tr(self._the_strings["RESULT"]))
                 if self.dico['with_png']:
                     png = svg_htm[:-3] + 'png'
                     f.write('<table width="940" align="center" cellspacing="10">\n')
@@ -413,13 +433,19 @@ class bcCBarAlgorithm(QgisAlgorithm):
                             (wh, svg_htm))
                     f.write('</div>\n')
                 #
-                f.write('<p align="center">%s (svg): %s</p>\n' % 
-                        (self.tr(self._the_strings[4]), svg_file))
+                f.write('<p align="center">%s (svg): <a href="%s">%s</a> %s</p>\n' % 
+                        (self.tr(self._the_strings["SOURCE"]), svg_file, svg_file,
+                         self.tr(self._the_strings["COPYPASTE"])))
                 if self.dico['with_png']:
-                    f.write('<p align="center">%s (png): %s</p>\n' % 
-                            (self.tr(self._the_strings[4]), svg_file[:-3] + 'png'))
-                f.write('<hr/>\n<h2>%s</h2>\n' % self.tr(self._the_strings[6]))
-                f.write(self._params_used(svg_file))
+                    f.write('<p align="center">%s (png): <a href="%s">%s</a></p>\n' % 
+                            (self.tr(self._the_strings["SOURCE"]), png, png))
+                f.write('<p align="center"><a href="file:///%s"><em>%s</em></a></p>\n' % 
+                        (os.path.split(svg_file)[0], os.path.split(svg_file)[0]))
+                #
+                f.write(self.tr(self._the_strings['SUFFIX']))
+                #
+                f.write('<hr/>\n<h2>%s</h2>\n' % self.tr(self._the_strings["PARAMS"]))
+                f.write(the_cb.get_params_used(self.the_layer.source(), self.the_params))
                 f.write('<hr/>\n')
                 f.write(self.tr(svg_note))
             f.write('</body>\n</html>\n')
@@ -430,28 +456,41 @@ class bcCBarAlgorithm(QgisAlgorithm):
     def initAlgorithm(self, config):
         ''' Here we define the inputs and output of the algorithm. '''
         #
-        # Prepare all parameters needed for plotting the colour bar
-        self._define_params()
-        for param in sorted(self.the_params, key=self.the_params.__getitem__):
-            self._set_param(param)
+        if is_dependencies_satisfied:
+            # Prepare all parameters needed for plotting the colour bar
+            self._define_params()
+            for param in sorted(self.the_params, key=self.the_params.__getitem__):
+                self._set_param(param)
 
-        # Other variables
-        self._error = ''
-        self.tmpDir = QgsProcessingUtils.tempFolder()
-        self.ori = self._ori_lst[0].lower()
+            # Other variables
+            self._error = ''
+            self.tmpDir = QgsProcessingUtils.tempFolder()
+            self.ori = self._ori_lst[0].lower()
+        else:
+            qparam = QgsProcessingParameterString(
+                    self.DEP,
+                    self.tr(self._the_strings["ERR_DEP"]),
+                    defaultValue = self.tr(self._the_strings["DEP_LST"]),
+                    optional = False
+                )
+            self.addParameter(qparam)
     #-------------------------------------------------------------------------------------
 
     def processAlgorithm(self, parameters, context, feedback):
         ''' Here is where the processing itself takes place. '''
         #
-        tmpf = str(uuid.uuid4())
-        res_file = os.path.join(self.tmpDir, tmpf + '.htm')
+        if not is_dependencies_satisfied:
+            return {}
+        #
+        tmpf        = str(uuid.uuid4())
+        res_file    = os.path.join(self.tmpDir, tmpf + '.htm')
         b_with_qml  = False
         self._error = ''
 
         self.the_layer = self.parameterAsRasterLayer(parameters, self.THE_LAYER, context)
+        #
         if not self._check_oneband(self.the_layer):
-            self._error = self._the_strings[0]
+            self._error = self._the_strings["ERR_NOONEBAND"]
             fil = self._create_HTML(res_file)
             return {self.OUTPUT:fil}
 
@@ -477,10 +516,12 @@ class bcCBarAlgorithm(QgisAlgorithm):
         title_color   = self.parameterAsString(parameters, self.TITLE_COLOR, context)
         units_color   = self.parameterAsString(parameters, self.UNITS_COLOR, context)
         labboth       = self.parameterAsBool(parameters,   self.LABEL_BOTH, context)
+        the_titre     = self.parameterAsString(parameters, self.TITLE, context)
+        the_titre = the_titre.replace('\\n', 'ÿ')
 
         self.dico = {'ori': self.ori,
                     'deci': self.parameterAsDouble(parameters, self.DECI, context),
-                   'title': self.parameterAsString(parameters, self.TITLE, context),
+                   'title': the_titre,
                    'units': self.parameterAsString(parameters, self.UNITS, context),
                     'cbwh': self.parameterAsDouble(parameters, self.CBWH, context),
                  'ticksep': self.parameterAsDouble(parameters, self.TICKSEP, context),
@@ -507,7 +548,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
             output_file = self._continue_proc(mycb, ori, labboth, output_file)
         else:
             self._error = mycb.get_error()
-            if self._error == mycb.the_strings[10]:
+            if self._error == mycb.the_strings["E_NOSTYLE"]:
                 # This is one band raster but not styled (could be straight from file)
                 # If yes, look for the qml side-car. If not found, abort
                 qml_file = self._check_sidecar(self.the_layer)
@@ -521,7 +562,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
                         self._error = mycb.get_error()
                 else:
                     # Not properly styled and no qml side-car
-                    self._error = mycb.get_error() + self._the_strings[8]
+                    self._error = mycb.get_error() + self._the_strings["ERR_NOSIDECAR"]
         #
         if not b_with_qml:
             try:
@@ -532,7 +573,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
         if self._error != '':
             fil = self._create_HTML(res_file)
         else:
-            fil = self._create_HTML(output_file)
+            fil = self._create_HTML(output_file, mycb)
         #
         return {self.OUTPUT:fil}
     #-------------------------------------------------------------------------------------
@@ -583,7 +624,7 @@ class bcCBarAlgorithm(QgisAlgorithm):
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         '''
-        return self.tr(self._the_strings[2])
+        return self.tr(self._the_strings["CREATE_CS"])
     #-------------------------------------------------------------------------------------
 
     def tags(self):
