@@ -1086,3 +1086,46 @@ class bcColorBar():
 
         return True
 #=========================================================================================
+
+if __name__ == "__main__":
+
+    pth = r'E:\Dev\bcc_QGIS_Plugins\git\geoprocAlgos\qml-examples'
+    files = ['N40E008.qml', 'SRTM90-3-PE1526.qml', 'v3-Palette.qml',   #  0   1   2
+             'SRTM90-3-PE1526_D-C5.qml', 'SRTM90-3-PE1526_D-EI5.qml',  #  3   4
+             'SRTM90-3-PE1526_D-Q5.qml',                               #  5 
+             'SRTM90-3-PE1526_E-C5.qml', 'SRTM90-3-PE1526_E-EI5.qml',  #  6   7
+             'SRTM90-3-PE1526_E-Q5.qml',                               #  8
+             'SRTM90-3-PE1526_L-C5.qml', 'SRTM90-3-PE1526_L-EI5.qml',  #  9  10
+             'SRTM90-3-PE1526_L-Q5.qml']                               # 11
+
+    fil = files[10]
+    dico = {'ori': 'horizontal',
+                'deci': 0,
+               'title': 'Un title\nsous-titre',
+               'units': 'units',
+                'cbwh': 0.1,
+             'ticksep': 1,
+              'offset': 0,
+          'label_both': True,
+            'label_on': 'top',
+           'font_size': 4,
+               'tfont': 2,
+               'ufont': 1,
+            'with_png': False,
+           'border_lw': .5,
+          'divider_lw': 0.0,
+       'divider_color': 'black',
+        'border_color': 'black',
+         'title_color': 'black',
+         'units_color': 'black',
+           'breversed': False
+    }
+
+    cb = bcColorBar(os.path.join(pth,fil),'',**dico)
+    if cb.get_init_state():
+        print(fil, cb.nMode, cb.cm, len(cb.vramp), len(cb.cramp))
+        cb.set_display = True
+        cb.draw_cb()
+
+    else:
+        print('Problem....', cb.get_error())    

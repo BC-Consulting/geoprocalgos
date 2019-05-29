@@ -414,3 +414,20 @@ class bc_svg():
         #
         return True
 #=========================================================================================
+
+# Remove for production....
+if __name__ == '__main__':
+
+    # Testing
+
+    the_dir = r'E:\Dev\bcc_QGIS_Plugins\git\bccscbar\dev\qml-examples'
+    the_file = 'N40E008_H21Fb.svg'
+    my_svg = bc_svg(os.path.join(the_dir, the_file))
+
+    if my_svg.is_init():
+        if not my_svg.auto_process():
+            print(my_svg.get_error())
+        else:
+            print('All ok!!')
+    else:
+        print(my_svg.get_error())

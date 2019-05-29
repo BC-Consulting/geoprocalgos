@@ -31,6 +31,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsProcessingProvider
 from .bcCBar_algorithm import bcCBarAlgorithm
 from .bcSaveqml_algorithm import bcSaveqmlAlgorithm
+from .bcStackP_algorithm import bcStackPAlgorithm
 
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
 
@@ -43,7 +44,8 @@ class geoprocProvider(QgsProcessingProvider):
 
         # Load algorithms
         self.alglist = [bcCBarAlgorithm(),
-                        bcSaveqmlAlgorithm()]
+                        bcSaveqmlAlgorithm(),
+                        bcStackPAlgorithm()]
     #-------------------------------------------------------------------------------------
 
     def icon(self):
