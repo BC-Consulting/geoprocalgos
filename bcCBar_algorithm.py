@@ -44,8 +44,8 @@ from qgis.core import (QgsProcessingAlgorithm,
 from .bcCBar3 import bcColorBar
 
 # Check for dependencies
-from .bcCBar3 import is_bs4_available, is_mpl_available
-is_dependencies_satisfied = is_bs4_available and is_mpl_available
+from .bcCBar3 import is_bs4_available, is_mpl_available, is_PIL_available
+is_dependencies_satisfied = is_bs4_available and is_mpl_available and is_PIL_available
 
 #-----------------------------------------------------------------------------------------
 FlagsAdv = QgsProcessingParameterDefinition.FlagAdvanced
@@ -134,10 +134,8 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                     "ERR_NOSAVEQML":"ERROR: Cannot save .qml file in temp directory!",
                     "ERR_NOSIDECAR":" And, no qml side-car found.",
                     "ERR_NOQML":"ERROR: Input file is neither a raster neither a .qml!",
-                    "ERR_MPL":"ERROR: matplotlib and numpy are needed!",
-                    "ERR_BS4":"ERROR: BeautifulSoup4 and lxml are needed!",
-                    "ERR_DEP":"ERROR: Needed dependencies are not installed!",
-                    "DEP_LST":"numpy, matplotlib, BeautifulSoup4 and lxml are needed...",
+                    "ERR_DEP":"ERROR: Some needed dependencies are not installed!",
+                    "DEP_LST":"numpy, matplotlib, pillow, bs4 and lxml are needed...",
                     "CREATE_CS":"Create Colour Scalebar",
                     "SOURCE":"Source",
                     "RESULT":"Result: colour scalebar",

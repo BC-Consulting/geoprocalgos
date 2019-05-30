@@ -41,7 +41,11 @@ plt.ioff()
 
 import os, re
 from xml.dom import minidom
-from PIL import Image
+try:
+    from PIL import Image
+    is_PIL_available = True
+except:
+    is_PIL_available = False
 
 try:
     from svg_manip import bc_svg

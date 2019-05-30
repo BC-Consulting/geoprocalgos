@@ -107,7 +107,6 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
 
     def __init__(self):
         super().__init__()
-        self._error = ''
     #-------------------------------------------------------------------------------------
 
     def _define_params(self):
@@ -248,7 +247,7 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
         #
         nar = np.array(ar[['X','Y']])
         line_pts = [QgsPoint(x,y) for x,y in nar]
-    
+
         # Rotate line to horizontal
         aziN   = line_pts[0].azimuth(line_pts[-1]) # angle positive clockwise from North
         azi    = -(aziN - 90.)
@@ -260,11 +259,30 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
         tx, ty = nar[:,0] - cx, nar[:,1] - cy
         px = tx * co - ty * si + cx
         py = tx * si + ty * co + cy
-    
+
+        # Take care of profile direction and line vs tie-line
+        bT = False
+        if self.azi != None and abs(int(azi) - self.azi) > 20:
+            if ((azi > self.azi and abs(int(azi) - (self.azi +180)) < 20) or
+                (azi < self.azi and abs(int(azi) - (self.azi -180)) < 20)):
+                inv = -inv
+            elif self.aziT == None:
+                # first tie line
+                self.aziT = int(azi)
+                bT = True
+            if self.aziT != None and abs(int(azi) - self.aziT) > 20:
+                if ((azi > self.aziT and abs(int(azi) - (self.aziT +180)) < 20) or
+                    (azi < self.aziT and abs(int(azi) - (self.aziT -180)) < 20)):
+                    inv = -inv
+                    bT = True
+            elif self.aziT != None and abs(int(azi) - self.aziT) <= 20:
+                    bT =True
+        if bT:
+            inv = -inv
         # Change Y-coords to scaled data
         mn = py.mean()  # average Y-coord
         ar['Yb'] = inv * (scale * (ar.Data - self.dmin) * self.mult + offset) + mn
-    
+
         # Rotate line back to original angle
         theta  = radians(azi)
         co, si = cos(theta), sin(theta)
@@ -272,6 +290,8 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
         px1 = tx * co - ty * si + cx   # New X-coords
         py1 = tx * si + ty * co + cy   # New Y-coords
         #
+        if self.azi == None:
+            self.azi = int(azi)
         return px1, py1  # profile coords
     #-------------------------------------------------------------------------------------
 
@@ -294,6 +314,9 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
             self.addParameter(qparam)
 
         self.tmpDir = QgsProcessingUtils.tempFolder()
+        self._error = ''
+        self.azi    = None
+        self.aziT   = None
     #-------------------------------------------------------------------------------------
 
     def processAlgorithm(self, parameters, context, feedback):
