@@ -48,9 +48,9 @@ except:
     is_PIL_available = False
 
 try:
-    from svg_manip import bc_svg
-except:
     from .svg_manip import bc_svg
+except:
+    from svg_manip import bc_svg
 #=========================================================================================
 
 class bcCBarError( RuntimeError ):

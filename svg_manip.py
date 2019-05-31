@@ -63,9 +63,9 @@ import os, codecs, re
 import datetime
 
 try:
-    from utils import get_dom, get_svg_header, bc_prettify_txt
-except:
     from .utils import get_dom, get_svg_header, bc_prettify_txt
+except:
+    from utils import get_dom, get_svg_header, bc_prettify_txt
 #=========================================================================================
 
 class bc_svg():

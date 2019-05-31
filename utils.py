@@ -25,7 +25,11 @@
 """
 
 import codecs
-from bs4 import BeautifulSoup
+try:
+    from bs4 import BeautifulSoup
+    bbs4 = True
+except:
+    bbs4 = False
 
 def get_dom(the_file, btxt = False):
     ''' Parse a html file or a string into a dom object.
@@ -35,6 +39,9 @@ def get_dom(the_file, btxt = False):
         return: BS4 dom object
     '''
     #
+    if not bbs4:
+        raise ModuleNotFoundError
+
     if not btxt:
         with codecs.open(the_file, 'r', 'utf-8') as fid:
             buff = fid.read()

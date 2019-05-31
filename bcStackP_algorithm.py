@@ -86,6 +86,7 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
     OFFSET    = 'OFFSET'
     JOINL     = 'JOINL'
     OUTPUT    = 'OUTPUT'
+    DEP       = 'DEP'
 
     _default_output = 'stacked.shp'
 
@@ -238,7 +239,7 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
     def _do_profile(self, ar, inv, scale, offset):
         ''' Create profile for current line.
             ar: current line (pandas DataFrame)
-            inv: do we inverse the profile? Default: False
+            inv: 1 (default) or -1 to reverse profile
             scale: scale profile relative to max-profile length
             offset: move profile relative to line trace
 
@@ -281,7 +282,7 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
             inv = -inv
         # Change Y-coords to scaled data
         mn = py.mean()  # average Y-coord
-        ar['Yb'] = inv * (scale * (ar.Data - self.dmin) * self.mult + offset) + mn
+        ar['Yb'] = inv * (scale * (ar.Data - self.dmean) * self.mult + offset) + mn
 
         # Rotate line back to original angle
         theta  = radians(azi)
@@ -424,9 +425,8 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
                 TL = le
         #
         stat.finalize()
-        dmax = stat.max()
-        self.dmin = stat.min()
-        self.mult = TL / (dmax - self.dmin)
+        self.dmean = stat.mean()
+        self.mult = TL / (stat.max() - stat.min())
         #
         if invP:
             iv = -1
