@@ -31,21 +31,13 @@ __revision__ = '$Format:%H$'
 
 import os, codecs, uuid
 from qgis.PyQt.QtGui import QIcon
-from qgis.core import (QgsProcessingUtils, QgsProcessing,
-                       QgsProcessingParameterRasterLayer,
-                       QgsProcessingParameterBoolean,
-                       QgsProcessingParameterFileDestination,
-                       QgsProcessingParameterNumber,
-                       QgsProcessingParameterString,
-                       QgsProcessingParameterEnum,
-                       QgsProcessingParameterDefinition,
-                       QgsProcessingParameterMultipleLayers)
+from qgis.core import (QgsProcessingUtils, QgsProcessing)
 from processing.algs.qgis.QgisAlgorithm import QgisAlgorithm
 
+from .setparams import set_param
 is_dependencies_satisfied = True
 
 #-----------------------------------------------------------------------------------------
-FlagsAdv = QgsProcessingParameterDefinition.FlagAdvanced
 rlayers = QgsProcessing.TypeRaster
 vlayers = QgsProcessing.TypeVectorAnyGeometry
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
@@ -102,89 +94,6 @@ class bcSaveqmlAlgorithm(QgisAlgorithm):
         }
     #-------------------------------------------------------------------------------------
 
-    def _set_param(self, param):
-        ''' Set parameter. '''
-        #
-        arg = self.the_params[param]
-        what = arg[2]
-        optional = arg[4]
-        the_str = arg[1]
-        qparam = None
-        #
-        if what == 'RasterLayer':
-            qparam = QgsProcessingParameterRasterLayer(
-                    param,
-                    self.tr(the_str),
-                    optional = optional
-                )
-        elif what == 'MultipleLayers':
-            qparam = QgsProcessingParameterMultipleLayers(
-                    param,
-                    self.tr(the_str),
-                    layerType = arg[3]['layerType'],
-                    optional = optional
-                )
-        elif what == 'Enum':
-            qparam = QgsProcessingParameterEnum(
-                    param,
-                    self.tr(the_str),
-                    [self.tr(s) for s in arg[3]['list']],
-                    defaultValue = arg[3]['defaultValue'],
-                    optional = optional
-                )
-        elif what == 'String':
-            qparam = QgsProcessingParameterString(
-                    param,
-                    self.tr(the_str),
-                    defaultValue = arg[3]['defaultValue'],
-                    optional = optional
-                )                
-        elif what == 'NumberD':
-            qparam = QgsProcessingParameterNumber(
-                    param,
-                    self.tr(the_str),
-                    type = QgsProcessingParameterNumber.Double,
-                    defaultValue = arg[3]['defaultValue'],
-                    minValue = arg[3]['minValue'],
-                    maxValue = arg[3]['maxValue'],
-                    optional = optional
-                )                
-        elif what == 'NumberI':
-            qparam = QgsProcessingParameterNumber(
-                    param,
-                    self.tr(the_str),
-                    type = QgsProcessingParameterNumber.Integer,
-                    defaultValue = arg[3]['defaultValue'],
-                    minValue = arg[3]['minValue'],
-                    maxValue = arg[3]['maxValue'],
-                    optional = optional
-                )                
-        elif what == 'Bool':
-            qparam = QgsProcessingParameterBoolean(
-                    param,
-                    self.tr(the_str),
-                    defaultValue = arg[3]['defaultValue'],
-                    optional = optional
-                )                
-        elif what == 'FileDestination':
-            qparam = QgsProcessingParameterFileDestination(
-                    param,
-                    self.tr(the_str),
-                    defaultValue = arg[3]['defaultValue'],
-                    fileFilter = arg[3]['FILTER'],
-                    optional = optional
-                )
-        #
-        if qparam != None:
-            if arg[0] < 100:
-                self.addParameter(qparam)
-            elif arg[0] < 1000:
-                qparam.setFlags(qparam.flags() | FlagsAdv)
-                self.addParameter((qparam))
-            else:
-                self.addParameter(qparam, True)
-    #-------------------------------------------------------------------------------------
-
     def _save_qml(self, theLayer):
         ''' Save the layer style to a qml file. '''
         #
@@ -231,7 +140,15 @@ class bcSaveqmlAlgorithm(QgisAlgorithm):
         #
         self._define_params()
         for param in sorted(self.the_params, key=self.the_params.__getitem__):
-            self._set_param(param)
+            b = self.the_params[param][0]
+            qparam = set_param(param, self.the_params)
+            if qparam != None:
+                if b < 100:
+                    self.addParameter(qparam)
+                elif b < 1000:
+                    self.addParameter((qparam))
+                else:
+                    self.addParameter(qparam, True)
 
         # Other variables
         self._error = ''

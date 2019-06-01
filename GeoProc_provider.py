@@ -32,6 +32,7 @@ from qgis.core import QgsProcessingProvider
 from .bcCBar_algorithm import bcCBarAlgorithm
 from .bcSaveqml_algorithm import bcSaveqmlAlgorithm
 from .bcStackP_algorithm import bcStackPAlgorithm
+from .bcGenRNDSurveyData_algorithm import bcGenRNDSurveyDataAlgorithm
 
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
 
@@ -45,7 +46,9 @@ class geoprocProvider(QgsProcessingProvider):
         # Load algorithms
         self.alglist = [bcCBarAlgorithm(),
                         bcSaveqmlAlgorithm(),
-                        bcStackPAlgorithm()]
+                        bcStackPAlgorithm(),
+                        bcGenRNDSurveyDataAlgorithm(),
+                       ]
     #-------------------------------------------------------------------------------------
 
     def icon(self):

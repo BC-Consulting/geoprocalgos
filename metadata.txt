@@ -5,7 +5,7 @@
 name=geoprocAlgos
 qgisMinimumVersion=3.0
 description=Collection of Processing algorithms from GeoProc.com
-version=3.5
+version=3.6
 author=GeoProc.com
 email=info@geoproc.com
 about=A collection of Processing-based algorithms to facilitate various QGIS tasks.
@@ -14,7 +14,8 @@ repository=https://github.com/BC-Consulting/geoprocalgos
 # End of mandatory metadata
 
 # Recommended items:
-changelog=V3.5 bcStackP3: Improved profiles position relative to line.
+changelog=V3.6 bcStackP3: Make more robust. Add bcGenRNDSurveyData algorithm.
+    V3.5 bcStackP3: Improved profiles position relative to line.
     V3.4 Fixed other dependency errors...
     V3.3 Fixed error on pillow dependency. Better handling of line directions in Stacked profiles algo.
     V3.2 Added stacked profile algorithm.

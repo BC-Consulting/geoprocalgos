@@ -31,16 +31,9 @@ import os, codecs, uuid
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import (QgsProcessingAlgorithm,
                        QgsProcessingUtils,
-                       QgsProcessingParameterRasterLayer,
-                       QgsProcessingParameterBoolean,
-                       QgsProcessingParameterFile,
-                       QgsProcessingParameterFileDestination,
-                       QgsProcessingParameterNumber,
-                       QgsProcessingParameterString,
-                       QgsProcessingParameterEnum,
-                       QgsProcessingParameterDefinition,
                        QgsMapLayer)
 
+from .setparams import set_param
 from .bcCBar3 import bcColorBar
 
 # Check for dependencies
@@ -48,7 +41,6 @@ from .bcCBar3 import is_bs4_available, is_mpl_available, is_PIL_available
 is_dependencies_satisfied = is_bs4_available and is_mpl_available and is_PIL_available
 
 #-----------------------------------------------------------------------------------------
-FlagsAdv = QgsProcessingParameterDefinition.FlagAdvanced
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
 
 the_url = 'http://www.geoproc.com/free/bccbar3.htm'
@@ -218,89 +210,8 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                              {'FILTER':self._pstr[23],'defaultValue':self._default_output}
                              ,True]
         }
-    #-------------------------------------------------------------------------------------
-
-    def _set_param(self, param):
-        ''' Set parameter. '''
-        #
-        arg = self.the_params[param]
-        what = arg[2]
-        optional = arg[4]
-        the_str = arg[1]
-        qparam = None
-        #
-        if what == 'RasterLayer':
-            qparam = QgsProcessingParameterRasterLayer(
-                    param,
-                    self.tr(the_str),
-                    optional = optional
-                )
-        elif what == 'File':
-            qparam = QgsProcessingParameterFile(
-                    param,
-                    self.tr(the_str),
-                    extension = arg[3]['ext'],
-                    optional = optional
-                )
-        elif what == 'Enum':
-            qparam = QgsProcessingParameterEnum(
-                    param,
-                    self.tr(the_str),
-                    [self.tr(s) for s in arg[3]['list']],
-                    defaultValue = arg[3]['defaultValue'],
-                    optional = optional
-                )
-        elif what == 'String':
-            qparam = QgsProcessingParameterString(
-                    param,
-                    self.tr(the_str),
-                    defaultValue = arg[3]['defaultValue'],
-                    optional = optional
-                )
-        elif what == 'NumberD':
-            qparam = QgsProcessingParameterNumber(
-                    param,
-                    self.tr(the_str),
-                    type = QgsProcessingParameterNumber.Double,
-                    defaultValue = arg[3]['defaultValue'],
-                    minValue = arg[3]['minValue'],
-                    maxValue = arg[3]['maxValue'],
-                    optional = optional
-                )                
-        elif what == 'NumberI':
-            qparam = QgsProcessingParameterNumber(
-                    param,
-                    self.tr(the_str),
-                    type = QgsProcessingParameterNumber.Integer,
-                    defaultValue = arg[3]['defaultValue'],
-                    minValue = arg[3]['minValue'],
-                    maxValue = arg[3]['maxValue'],
-                    optional = optional
-                )                
-        elif what == 'Bool':
-            qparam = QgsProcessingParameterBoolean(
-                    param,
-                    self.tr(the_str),
-                    defaultValue = arg[3]['defaultValue'],
-                    optional = optional
-                )                
-        elif what == 'FileDestination':
-            qparam = QgsProcessingParameterFileDestination(
-                    param,
-                    self.tr(the_str),
-                    defaultValue = arg[3]['defaultValue'],
-                    fileFilter = arg[3]['FILTER'],
-                    optional = optional
-                )
-        #
-        if qparam != None:
-            if arg[0] < 100:
-                self.addParameter(qparam)
-            elif arg[0] < 1000:
-                qparam.setFlags(qparam.flags() | FlagsAdv)
-                self.addParameter((qparam))
-            else:
-                self.addParameter(qparam, True)
+        self._err_param = {self.DEP: [1,self._the_strings["ERR_DEP"],'String',
+                           {'defaultValue':self._the_strings["DEP_LST"]},False]}
     #-------------------------------------------------------------------------------------
 
     def _save_qml(self, theLayer):
@@ -458,20 +369,24 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
             # Prepare all parameters needed for plotting the colour bar
             self._define_params()
             for param in sorted(self.the_params, key=self.the_params.__getitem__):
-                self._set_param(param)
+                b = self.the_params[param][0]
+                qparam = set_param(param, self.the_params)
+                if qparam != None:
+                    if b < 100:
+                        self.addParameter(qparam)
+                    elif b < 1000:
+                        self.addParameter((qparam))
+                    else:
+                        self.addParameter(qparam, True)
 
-            # Other variables
-            self._error = ''
-            self.tmpDir = QgsProcessingUtils.tempFolder()
-            self.ori = self._ori_lst[0].lower()
         else:
-            qparam = QgsProcessingParameterString(
-                    self.DEP,
-                    self.tr(self._the_strings["ERR_DEP"]),
-                    defaultValue = self.tr(self._the_strings["DEP_LST"]),
-                    optional = False
-                )
+            qparam = set_param(self.DEP, self._err_param)
             self.addParameter(qparam)
+
+        # Other variables
+        self._error = ''
+        self.tmpDir = QgsProcessingUtils.tempFolder()
+        self.ori = self._ori_lst[0].lower()
     #-------------------------------------------------------------------------------------
 
     def processAlgorithm(self, parameters, context, feedback):
