@@ -37,9 +37,11 @@ except:
     is_dependencies_satisfied = False
 
 from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtCore import QVariant
 from qgis.core import (QgsProcessingAlgorithm, QgsProcessing,
                        QgsProcessingUtils,
                        QgsProcessingFeatureSource,
+                       QgsField,
                        QgsFields,
                        QgsFeature,
                        QgsGeometry,
@@ -56,7 +58,19 @@ from .setparams import set_param
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
 
 the_url = 'http://www.geoproc.com/free/bcStackP3.htm'
-help_string = "Creates 2D stacked profiles for survey data along lines and tie lines."
+help_string = """Creates 2D stacked profiles for survey data along lines and tie lines.
+<b>Note</b>: Input layer CAN ONLY BE A <b>POINT</b> layer. No other types of layer are accepted. Not even MULTIPOINT layers.
+
+If you want to compare profiles from different channels in your layer you can then check 'Do scaling relative to another channel?' and select the channel used for scaling the profiles.
+
+Resulting line vector has the following fields:
+- <i><b>Line</b></i>: storing the original line number. Its coordinates are derived from the data channel used.
+- <i><b>Type</b></i>: line type, either L or T for line and tie-line, respectively.
+- <i><b>NbPts</b></i>: number of points in the profile.
+- <i><b>Azimuth</b></i>: azimuth of the line. Positive clockwise from North.
+- <i><b>DistEP</b></i>: distance between end points of the line.
+- <i><b>Length</b></i>: length of the line (&ge; DistEP).
+"""
 the_tags = ['geophysics','line','stacked','profile','vector','magnetic','electromagnetic',
             'gravity','electrical','radiometric','2D','survey']
 #-----------------------------------------------------------------------------------------
@@ -74,6 +88,9 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
     OFFSET    = 'OFFSET'
     JOINL     = 'JOINL'
     OUTPUT    = 'OUTPUT'
+    BSCALE    = 'BSCALE'
+    SCALLY    = 'SCALLY'
+    SCALCH    = 'SCALCH'
     DEP       = 'DEP'
 
     _default_output = 'stacked profiles_ln'
@@ -85,16 +102,18 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
                     "bcStackP3":"Stacked profiles from point layer"
                    }
 
-    _pstr = ['Input vector (point layers only. NO multipoint or otherwise)',
-             'Fiducial field (monotonically increasing number)',
-             'Data field (numeric)', 'Line field',
-             'Reverse profiles?',
-             'Profile scale (relative to longest line length)',
-             'Profile offset (relative to base line, +/-)',
-             'Join profile to line?',
-             'Output: Stacked profile vector file',
-             'Output line vector file',
-             'Vector files (*.shp)', 'All files (*.*)']
+    _pstr = ['Input vector (point layers only. NO multipoint or otherwise)', #  0
+             'Fiducial field (monotonically increasing number)',             #  1
+             'Data field (numeric)', 'Line field',                           #  2
+             'Reverse profiles?',                                            #  3
+             'Profile scale (relative to longest line length)',              #  4
+             'Profile offset (relative to base line, +/-)',                  #  5
+             'Join profile to line?',                                        #  6
+             'Do scaling relative to another channel?',                      #  7
+             'Scaling layer',                                                #  8
+             'Scaling channel',                                              #  9
+             'Output: Stacked profile vector file',                          # 10
+             'Output line vector file']                                      # 11
 
     def __init__(self):
         super().__init__()
@@ -118,12 +137,47 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
            self.OFFSET:       [7,self._pstr[6],'NumberD',
                                {'defaultValue':0.,'minValue':-1e5,'maxValue':1e5},True],
            self.JOINL:        [8,self._pstr[7],'Bool',{'defaultValue':False},True],
-           self.OUTPUT:       [1001,self._pstr[8],'SINK',
+           self.BSCALE:       [109,self._pstr[8],'Bool',{'defaultValue':False},True],
+           self.SCALLY:       [110,self._pstr[9],'VectorLayer',
+                               {'types':[QgsProcessing.TypeVectorPoint]},True],
+           self.SCALCH:       [111,self._pstr[10],'Field',{'parent':self.THE_LAYER},True],
+           self.OUTPUT:       [1001,self._pstr[11],'SINK',
                                {'type':QgsProcessing.TypeVectorLine,
                                 'defaultValue':self._default_output},True]
         }
         self._err_param = {self.DEP: [1,self._the_strings["ERR_DEP"],'String',
                            {'defaultValue':self._the_strings["DEP_LST"]},False]}
+    #-------------------------------------------------------------------------------------
+
+    def initAlgorithm(self, config):
+        ''' Here we define the inputs and output of the algorithm. '''
+        #
+        if is_dependencies_satisfied:
+            # Prepare all parameters needed for plotting the colour bar
+            self._define_params()
+            for param in sorted(self.the_params, key=self.the_params.__getitem__):
+                b = self.the_params[param][0]
+                qparam = set_param(param, self.the_params)
+                if qparam != None:
+                    if b < 100:
+                        self.addParameter(qparam)
+                    elif b < 1000:
+                        self.addParameter((qparam))
+                    else:
+                        self.addParameter(qparam, True)
+
+        else:
+            qparam = set_param(self.DEP, self._err_param)
+            self.addParameter(qparam)
+
+        self.tmpDir  = QgsProcessingUtils.tempFolder()
+        self._error  = ''
+        self.azi     = None
+        self.aziT    = None
+        self.type    = 'L'
+        self.azimut  = None
+        self.length  = 0.
+        self.clength = 0.
     #-------------------------------------------------------------------------------------
 
     def _do_profile(self, ar, inv, scale, offset):
@@ -153,6 +207,7 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
 
         # Take care of profile direction and line vs tie-line
         bT = False
+        self.type = 'L'
         if self.azi != None and abs(int(azi) - self.azi) > 20:
             if ((azi > self.azi and abs(int(azi) - (self.azi +180)) < 20) or
                 (azi < self.azi and abs(int(azi) - (self.azi -180)) < 20)):
@@ -170,6 +225,7 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
                     bT =True
         if bT:
             inv = -inv
+            self.type = 'T'
         # Change Y-coords to scaled data
         mn = py.mean()  # average Y-coord
         ar['Yb'] = inv * (scale * (ar.Data - self.dmean) * self.mult + offset) + mn
@@ -181,36 +237,14 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
         px1 = tx * co - ty * si + cx   # New X-coords
         py1 = tx * si + ty * co + cy   # New Y-coords
         #
+        self.azimut = aziN
+        self.length = line_pts[0].distance(line_pts[-1])
+        self.clength = np.array([line_pts[i].distance(line_pts[i+1]) 
+                                                   for i in range(len(line_pts)-1)]).sum()
+        #
         if self.azi == None:
             self.azi = int(azi)
         return px1, py1  # profile coords
-    #-------------------------------------------------------------------------------------
-
-    def initAlgorithm(self, config):
-        ''' Here we define the inputs and output of the algorithm. '''
-        #
-        if is_dependencies_satisfied:
-            # Prepare all parameters needed for plotting the colour bar
-            self._define_params()
-            for param in sorted(self.the_params, key=self.the_params.__getitem__):
-                b = self.the_params[param][0]
-                qparam = set_param(param, self.the_params)
-                if qparam != None:
-                    if b < 100:
-                        self.addParameter(qparam)
-                    elif b < 1000:
-                        self.addParameter((qparam))
-                    else:
-                        self.addParameter(qparam, True)
-
-        else:
-            qparam = set_param(self.DEP, self._err_param)
-            self.addParameter(qparam)
-
-        self.tmpDir = QgsProcessingUtils.tempFolder()
-        self._error = ''
-        self.azi    = None
-        self.aziT   = None
     #-------------------------------------------------------------------------------------
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -219,17 +253,25 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
         if not is_dependencies_satisfied:
             return {}
 
+        # The number of features in the input layer could be trimmed to user selection.
         the_layer = self.parameterAsSource(parameters, self.THE_LAYER, context)
         if the_layer is None or the_layer.wkbType() != QgsWkbTypes.Point:
             raise QgsProcessingException(self.invalidSourceError(parameters,
                                                                  self.THE_LAYER))
         #
-        fidu_fld = self.parameterAsString(parameters, self.FID_FLD, context)
-        data_fld = self.parameterAsString(parameters, self.DATA_FLD, context)
-        line_fld = self.parameterAsString(parameters, self.LINE_FLD, context)
-        invP = self.parameterAsBool(parameters, self.INVERTP, context)
-        scale =  self.parameterAsDouble(parameters, self.SCALE, context)
-        offset = self.parameterAsDouble(parameters, self.OFFSET, context)
+        bCHscal = self.parameterAsBool(parameters, self.BSCALE, context)
+        if bCHscal:
+            # Use another channel for scaling. All data from that channel will be used.
+            scally = self.parameterAsSource(parameters, self.SCALLY, context)
+            if scally is None or the_layer.wkbType() != QgsWkbTypes.Point:
+                raise QgsProcessingException(self.invalidSourceError(parameters,
+                                                                     self.SCALLY))
+        fidu_fld     = self.parameterAsString(parameters, self.FID_FLD, context)
+        data_fld     = self.parameterAsString(parameters, self.DATA_FLD, context)
+        line_fld     = self.parameterAsString(parameters, self.LINE_FLD, context)
+        invP         = self.parameterAsBool(parameters, self.INVERTP, context)
+        scale        =  self.parameterAsDouble(parameters, self.SCALE, context)
+        offset       = self.parameterAsDouble(parameters, self.OFFSET, context)
         join_to_line = self.parameterAsBool(parameters, self.JOINL, context)
 
         data = the_layer.fields().at(the_layer.fields().lookupField(data_fld))
@@ -250,11 +292,17 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
         if QgsWkbTypes.hasZ(the_layer.wkbType()):
             output_wkb = QgsWkbTypes.addZ(output_wkb)
 
-        # Keep line into stacked profile vector
+        # Fields of stacked profiles vector
         line_def = the_layer.fields().at(line_ix)
         fields = QgsFields()
         if line_def is not None:
-            fields.append(line_def)
+            fields = QgsFields()
+            fields.append(QgsField('Line', QVariant.String, '', 16))
+            fields.append(QgsField('Type', QVariant.String, '', 2))
+            fields.append(QgsField('NbPts', QVariant.Int, '', 10, 0))
+            fields.append(QgsField('Azimuth', QVariant.Double, '', 10, 6))
+            fields.append(QgsField('DistEP', QVariant.Double, '', 10, 2))
+            fields.append(QgsField('Length', QVariant.Double, '', 10, 2))
         (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT, context, fields,
                                                output_wkb, the_layer.sourceCrs())
         if sink is None:
@@ -300,10 +348,15 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
                     nL = 0
                 lineN = ft[line.name()]
             #
+            # how to handle QgsMultiPoint ???
             point = ft.geometry().constGet().clone()
-            # QgsMultiPoint
-            xyzf.append([point.x(), point.y(), ft[fidu.name()], ft[data.name()]])
-            nL += 1
+            try:
+                rdata = float(ft[data.name()])
+                fiduu = int(ft[fidu.name()])
+                xyzf.append([point.x(), point.y(), fiduu, rdata])
+                nL += 1
+            except:
+                pass
         # last line
         if xyzf != []:
             lines.append([lineN, nL])
@@ -322,11 +375,26 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
         self.dmean = stat.mean()
         self.mult = TL / (stat.max() - stat.min())
         #
+        if bCHscal:
+            # Scaling field: retrieve its stats
+            scch_fld = self.parameterAsString(parameters, self.SCALCH, context)
+            scch     = scally.fields().at(scally.fields().lookupField(scch_fld))
+            scch_ix  = scally.fields().lookupField(scch_fld)
+            scch_f   = scally.getFeatures(QgsFeatureRequest().setSubsetOfAttributes(
+                           [scch_ix]), 
+                           QgsProcessingFeatureSource.FlagSkipGeometryValidityChecks)
+            stat  = QgsStatisticalSummary()
+            for current, ft in enumerate(scch_f):
+                stat.addVariant(ft[scch.name()])
+            stat.finalize()
+            self.dmean = stat.mean()
+            self.mult = TL / (stat.max() - stat.min())
+        #
         if invP:
             iv = -1
         else:
             iv = 1
-        total = 40.0 / (nL + 1)
+        total = 40.0 / (len(lines) + 1)
         # For each line:
         for current, z in enumerate(lines):
             line = z[0]
@@ -349,7 +417,11 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
 
             #Construct vector layer
             f = QgsFeature()
-            f.setAttributes([line,])
+            typeL  = str(self.type)
+            azimut = float(self.azimut)
+            Len    = float(self.length)
+            CLen   = float(self.clength)
+            f.setAttributes([str(line), typeL, int(len(px)), azimut, Len, CLen])
             line_pts = [QgsPoint(x,y) for x,y in zip(px, py)]
             if join_to_line:
                 # Join profile to its line

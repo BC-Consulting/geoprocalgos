@@ -139,7 +139,7 @@ def set_param(param, the_params):
                   )
     #
     if qparam != None:
-        if arg[0] < 1000:
+        if 100 <= arg[0] < 1000:
             qparam.setFlags(qparam.flags() | FlagsAdv)
         return qparam
     #

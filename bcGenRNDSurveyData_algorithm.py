@@ -170,24 +170,22 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
 
         def seed_s():
             s = float(np.random.rand(1))
-            if s < 0.05:
-                s = 1.618
-            elif s < 0.1618:
-                s = 3.236
-            elif s < 0.3236:
+            if s < 0.01:
                 s = 6.472
-            elif s < 0.6472:
+            elif s < 0.0618:
+                s = 3.236
+            elif s < 0.985:
+                s = 0.
+            elif s < 0.995:
                 s = 9.708
-            elif s < 0.9708:
-                s = 11.326
             else:
-                s = 14.562
+                s = 11.326
             return s
 
-        s = seed_s()
-        sm = seed_s()
-        ar[(rd>0.98)] = s
-        ar[(rd<0.02)] = -sm
+        npo = len(ar[(rd>0.95)])
+        nne = len(ar[(rd<0.05)])
+        ar[(rd>0.95)] = [ seed_s() / 1.618 for i in range(npo)]
+        ar[(rd<0.05)] = [-seed_s() / 1.618 for i in range(nne)]
         return ar
     #-------------------------------------------------------------------------------------
 
@@ -270,14 +268,28 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
         # Data - with noise
         Vs = []
         Dd = Dmax - Dmin
+        d = 0.05 * (np.sin(w) + np.cos(w)) * Dd + Dmin
         for i in range(int(nL / 10)+1):
-            d = (np.sin(w) + np.cos(w)) * Dd + Dmin
             if (i % 3) == 0:
-                V = 0.5 * d + self._noise(n, Dd, 110.) + 0.1 * self._spike(n) * Dd
+                V = d + self._noise(n, Dd, 3.)
+                V = (V + np.roll(V,1) + np.roll(V,2) + np.roll(V,3) + np.roll(V,4)) / 5.
+                V += 0.05 * self._spike(n) * Dd
+            elif (i % 4) == 0:
+                V = d + self._noise(n, Dd, 3.)
+                V = (V + np.roll(V,1) + np.roll(V,2) + np.roll(V,3) + np.roll(V,4)) / 5.
+                V += 0.5 * self._spike(n) * Dd
             else:
-                V = 0.5 * d + self._noise(n, Dd, 150.) + self._spike(n) * Dd
+                V = d + self._noise(n, Dd, 3.)
+                V = (V + np.roll(V,1) + np.roll(V,2) + np.roll(V,3) + np.roll(V,4)) / 5.
+                V += 0.1 * self._spike(n) * Dd
             Vs.append(V)
-        VT = 0.5 * (np.sin(wT) + np.cos(wT)) * Dd + self._noise(npT, Dd, 100.) + Dmin
+        Vs[1] = np.roll(Vs[1], 6)
+        VT = 0.05 * (np.sin(wT) + np.cos(wT)) * Dd + self._noise(npT, Dd, 10.) + Dmin
+        VT = (VT + np.roll(VT,1) + np.roll(VT,2) + np.roll(VT,3) + np.roll(VT,4)) / 5.
+
+        # Y-coords with noise: line offset
+        y0 = y0 + self._noise(nL, dy, 10.)
+        x1 = x1 + self._noise(nT, dy, 10.)
 
         # Generate survey
         fid = 0
@@ -290,10 +302,18 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
 
             line += 10
             k = int(j / 10)
-            x = x0 + self._noise(n, dx, 30.)
-            cline = np.array([[ex, y0[j] + float(self._noise(1, dy, 10.)), fid + i + 1,
-                                               line, Vs[k][i]] for i, ex in enumerate(x)])
+            # Add noise on point location
+            x = x0 + self._noise(n, dx, 3.)
+            if k == 0:
+                aV = np.roll(Vs[k], abs(int((j+1)**.8)))
+            elif k == 1:
+                aV = np.roll(Vs[k], -abs(int((j+1-10)**.8)))
+            else: aV = Vs[k]
+            cline = np.array([[ex, y0[j] + float(self._noise(1, dy, 3.)), fid + i + 1,
+                                                  line, aV[i]] for i, ex in enumerate(x)])
             fid += n
+            if k == 0:
+                np.roll(Vs[k], 3)
 
             # rotate line
             if j == 0:
@@ -321,8 +341,9 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
                 break
 
             line += 10
-            yT = y1 + self._noise(npT, dx, 15.)
-            cline0 = np.array([[x1[j] + float(self._noise(1, dy, 5.)), ey, fid + i + 1,
+            # Add noise on point location
+            yT = y1 + self._noise(npT, dx, 3.)
+            cline0 = np.array([[x1[j] + float(self._noise(1, dy, 3.)), ey, fid + i + 1,
                                                line, VT[i]] for i, ey in enumerate(yT)])
             fid += nL
             # rotate line
