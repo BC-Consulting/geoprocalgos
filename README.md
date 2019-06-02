@@ -61,4 +61,4 @@ Add "http://www.geoproc.com/free/plugins.xml" to QGIS plugin repositories source
 
 ---
 
-Last updated: 1 June 2019
+Last updated: 2 June 2019

@@ -171,15 +171,15 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
         def seed_s():
             s = float(np.random.rand(1))
             if s < 0.01:
-                s = 6.472
+                s = 6.072
             elif s < 0.0618:
                 s = 3.236
             elif s < 0.985:
                 s = 0.
             elif s < 0.995:
-                s = 9.708
+                s = 4.554
             else:
-                s = 11.326
+                s = 9.708
             return s
 
         npo = len(ar[(rd>0.95)])
@@ -268,7 +268,14 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
         # Data - with noise
         Vs = []
         Dd = Dmax - Dmin
-        d = 0.05 * (np.sin(w) + np.cos(w)) * Dd + Dmin
+        d = 0.01 * (np.sin(w) + np.cos(w)) * Dd + Dmin
+        n2 = int(n/2)
+        if (n % 2) == 0:
+            off = 0
+        else:
+            off = 1
+        d += np.hstack((np.array([i/2. for i in range(n2)]), 
+                        np.array([(n2-i)/2. for i in range(n2+off)])))
         for i in range(int(nL / 10)+1):
             if (i % 3) == 0:
                 V = d + self._noise(n, Dd, 3.)
@@ -284,8 +291,13 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
                 V += 0.1 * self._spike(n) * Dd
             Vs.append(V)
         Vs[1] = np.roll(Vs[1], 6)
-        VT = 0.05 * (np.sin(wT) + np.cos(wT)) * Dd + self._noise(npT, Dd, 10.) + Dmin
-        VT = (VT + np.roll(VT,1) + np.roll(VT,2) + np.roll(VT,3) + np.roll(VT,4)) / 5.
+        VTs = []
+        for i in range(nT):
+            VT = 0.01*(np.sin(wT) + np.cos(wT))*Dd/3. + self._noise(npT, Dd, 50.) + Dmin
+            VT = (VT + np.roll(VT,1) + np.roll(VT,2) + np.roll(VT,3) + np.roll(VT,4)) / 5.
+            VT = (VT + np.roll(VT,1) + np.roll(VT,2) + np.roll(VT,3) + np.roll(VT,4)) / 5.
+            VT = (VT + np.roll(VT,1) + np.roll(VT,2) + np.roll(VT,3) + np.roll(VT,4)) / 5.
+            VTs.append(VT)
 
         # Y-coords with noise: line offset
         y0 = y0 + self._noise(nL, dy, 10.)
@@ -305,9 +317,9 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
             # Add noise on point location
             x = x0 + self._noise(n, dx, 3.)
             if k == 0:
-                aV = np.roll(Vs[k], abs(int((j+1)**.8)))
+                aV = np.roll(Vs[k], abs(int((j+1)**.95)))
             elif k == 1:
-                aV = np.roll(Vs[k], -abs(int((j+1-10)**.8)))
+                aV = np.roll(Vs[k], -abs(int((j+1-10)**.95)))
             else: aV = Vs[k]
             cline = np.array([[ex, y0[j] + float(self._noise(1, dy, 3.)), fid + i + 1,
                                                   line, aV[i]] for i, ex in enumerate(x)])
@@ -344,7 +356,7 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
             # Add noise on point location
             yT = y1 + self._noise(npT, dx, 3.)
             cline0 = np.array([[x1[j] + float(self._noise(1, dy, 3.)), ey, fid + i + 1,
-                                               line, VT[i]] for i, ey in enumerate(yT)])
+                                             line, VTs[j][i]] for i, ey in enumerate(yT)])
             fid += nL
             # rotate line
             cline = self._rotate_line(cline0, c, angle)

@@ -38,20 +38,21 @@ except:
 
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtCore import QVariant
-from qgis.core import (QgsProcessingAlgorithm, QgsProcessing,
-                       QgsProcessingUtils,
-                       QgsProcessingFeatureSource,
+from qgis.core import (QgsFeature,
+                       QgsFeatureRequest,
+                       QgsFeatureSink,
                        QgsField,
                        QgsFields,
-                       QgsFeature,
                        QgsGeometry,
-                       QgsPoint,
                        QgsLineString,
-                       QgsWkbTypes,
-                       QgsFeatureRequest,
+                       QgsPoint,
+                       QgsProcessing,
+                       QgsProcessingAlgorithm,
                        QgsProcessingException,
+                       QgsProcessingFeatureSource,
+                       QgsProcessingUtils,
                        QgsStatisticalSummary,
-                       QgsFeatureSink)
+                       QgsWkbTypes)
 from .setparams import set_param
 
 #-----------------------------------------------------------------------------------------
@@ -253,9 +254,11 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
         if not is_dependencies_satisfied:
             return {}
 
+# Init
         # The number of features in the input layer could be trimmed to user selection.
         the_layer = self.parameterAsSource(parameters, self.THE_LAYER, context)
-        if the_layer is None or the_layer.wkbType() != QgsWkbTypes.Point:
+        if (the_layer is None or (the_layer.wkbType() != QgsWkbTypes.Point and
+                                  the_layer.wkbType() != QgsWkbTypes.MultiPoint)):
             raise QgsProcessingException(self.invalidSourceError(parameters,
                                                                  self.THE_LAYER))
         #
@@ -269,10 +272,10 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
         fidu_fld     = self.parameterAsString(parameters, self.FID_FLD, context)
         data_fld     = self.parameterAsString(parameters, self.DATA_FLD, context)
         line_fld     = self.parameterAsString(parameters, self.LINE_FLD, context)
-        invP         = self.parameterAsBool(parameters, self.INVERTP, context)
-        scale        =  self.parameterAsDouble(parameters, self.SCALE, context)
+        invP         = self.parameterAsBool(parameters,   self.INVERTP, context)
+        scale        = self.parameterAsDouble(parameters, self.SCALE, context)
         offset       = self.parameterAsDouble(parameters, self.OFFSET, context)
-        join_to_line = self.parameterAsBool(parameters, self.JOINL, context)
+        join_to_line = self.parameterAsBool(parameters,   self.JOINL, context)
 
         data = the_layer.fields().at(the_layer.fields().lookupField(data_fld))
         fidu = the_layer.fields().at(the_layer.fields().lookupField(fidu_fld))
@@ -313,6 +316,7 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
                        [fidu_ix, line_ix, data_ix]), 
                        QgsProcessingFeatureSource.FlagSkipGeometryValidityChecks)
 
+# CSV
         # Find min/max of data values for all lines and save each line in a csv file
         # Then process each line separately: can have any number of lines...
         lines = []
@@ -349,12 +353,18 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
                 lineN = ft[line.name()]
             #
             # how to handle QgsMultiPoint ???
-            point = ft.geometry().constGet().clone()
+            if the_layer.wkbType() == QgsWkbTypes.MultiPoint:
+                # Suppose they all have the same attributes:
+                #  in this case it seems useless to get more than the first point, but...
+                points = ft.geometry().constGet().clone()
+            if the_layer.wkbType() == QgsWkbTypes.Point:
+                points = [ft.geometry().constGet().clone()]
             try:
                 rdata = float(ft[data.name()])
                 fiduu = int(ft[fidu.name()])
-                xyzf.append([point.x(), point.y(), fiduu, rdata])
-                nL += 1
+                for point in points:
+                    xyzf.append([point.x(), point.y(), fiduu, rdata])
+                    nL += 1
             except:
                 pass
         # last line
@@ -394,6 +404,8 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
             iv = -1
         else:
             iv = 1
+
+# Profile
         total = 40.0 / (len(lines) + 1)
         # For each line:
         for current, z in enumerate(lines):
