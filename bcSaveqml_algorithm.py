@@ -35,6 +35,7 @@ from qgis.core import (QgsProcessingUtils, QgsProcessing)
 from processing.algs.qgis.QgisAlgorithm import QgisAlgorithm
 
 from .setparams import set_param
+from .bcHelp import help_bcSaveqml
 is_dependencies_satisfied = True
 
 #-----------------------------------------------------------------------------------------
@@ -43,11 +44,7 @@ vlayers = QgsProcessing.TypeVectorAnyGeometry
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
 
 the_url = 'http://www.geoproc.com/free/bcSaveqml3.htm'
-help_string = """
-Save the style of each selected layer in .qml files.
-The qml filename has the same name as the layer and it is located in the same directory.
-<br/>For more information see the home page.
-"""
+help_string = help_bcSaveqml
 the_tags = ['qml','save','bulk','layer','style']
 #-----------------------------------------------------------------------------------------
 
@@ -174,13 +171,13 @@ class bcSaveqmlAlgorithm(QgisAlgorithm):
         for i, layer in enumerate(the_vlayers):
             bOk = self._save_qml(layer)
             if not bOk:
-                self._error += self._the_strings[2] + layer.name()
+                self._error += self._the_strings[2] + layer.name() + '<br/>\n'
 
         j = -1
         for j, layer in enumerate(the_rlayers):
             bOk = self._save_qml(layer)
             if not bOk:
-                self._error += self._the_strings[2] + layer.name()
+                self._error += self._the_strings[2] + layer.name() + '<br/>\n'
 
         fil = self._create_HTML(output_file, i, j)
         #

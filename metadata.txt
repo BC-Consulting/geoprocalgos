@@ -5,7 +5,7 @@
 name=geoprocAlgos
 qgisMinimumVersion=3.0
 description=Collection of Processing algorithms from GeoProc.com
-version=3.7
+version=3.8
 author=GeoProc.com
 email=info@geoproc.com
 about=A collection of Processing-based algorithms to facilitate various QGIS tasks.
@@ -14,7 +14,8 @@ repository=https://github.com/BC-Consulting/geoprocalgos
 # End of mandatory metadata
 
 # Recommended items:
-changelog=V.7 bcStackP3: Add global scaling. bcGenRNDSurveyData some changes.
+changelog=V3.8 bcStackP3: Add dummy value. All: fix dependency warning bug.
+    V3.7 bcStackP3: Add global scaling. bcGenRNDSurveyData some changes.
     V3.6 bcStackP3: Make more robust. Add bcGenRNDSurveyData algorithm.
     V3.5 bcStackP3: Improved profiles position relative to line.
     V3.4 Fixed other dependency errors...

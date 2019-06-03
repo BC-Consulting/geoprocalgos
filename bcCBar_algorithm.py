@@ -35,6 +35,7 @@ from qgis.core import (QgsProcessingAlgorithm,
 
 from .setparams import set_param
 from .bcCBar3 import bcColorBar
+from .bcHelp import help_bcCBar
 
 # Check for dependencies
 from .bcCBar3 import is_bs4_available, is_mpl_available, is_PIL_available
@@ -44,42 +45,7 @@ is_dependencies_satisfied = is_bs4_available and is_mpl_available and is_PIL_ava
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
 
 the_url = 'http://www.geoproc.com/free/bccbar3.htm'
-help_string = """
-<i>Generate a colour scalebar from a one-band raster for use in Composer</i>
-<b>Paramaters needed to draw the scalebar are</b>:<br/>
-<b>Required</b>
-Input: currently selected raster in QGIS legend. A qml file will automatically be created.
-<br/><b>Optional</b>
-Scalebar orientation: "vertical"* or "horizontal"
-Number of decimals to display in tick labels (default: 2)
-Title of the colour scalebar. Use ÿ (ASCII 255) as multilines marker.
-Sub-title of the colour scalebar (single line). Generally units of the raster.
-Ratio width of the colour scalebar relative to full length (0.1)
-Tick separation: every 'ticksep' is shown (default: 1 [>= 1])
-Offset to arrive at nice numbers for ticks labelling (default: 0. [-100., 100.])
-Label both sides of the colour scalebar or not. False*
-Or which side to label: 'none', 'both', 'top', 'bottom'*, 'right'*, 'left'.
-Ticks label font size relative to plot area. Default 4, [.2, 10.]
-Title font size relative to ticks label font size (+2)* [-10.,10.]
-Sub-title font size relative to ticks label font size (+1)*
-Colour scalebar frame line width (default 1.0 [0.0, 5.0])
-Colour dividers line width, between colours (default 0.0 [0., 2.5])
-Title colour ('black'*)
-Sub-title colour ('black'*)
-Frame colour ('black'*)
-Divider colour ('black'*)
-The scalebar can be reversed. False*
-A png file can be created in addition to the svg file. False*
-Additional parameters can be defined. See home page for more details.<br/>
-Ouptut: the name of the svg file representing the generated colour scalebar.<br/>
-*: default<br/><br/>
--------------------------------------------------------------------
-One-band-rasters saved with QGIS V3.x are the only ones accepted.
-Colour interpolation can be: LINEAR, EXACT, DISCRETE or PALETTED.
-Colour mode can be: Continuous, Equal Interval or Quantile.<br/>
-Title and sub-title accept text formatted in Maptplotlib mathtext.
--------------------------------------------------------------------
-"""
+help_string = help_bcCBar
 svg_note = """<p>"It is known that some vector graphics viewers (svg and pdf) 
 renders white gaps between segments of the colorbar. This is due to bugs in the viewers, 
 not Matplotlib."<br/>\n<em>source: https://matplotlib.org/api/_as_gen/matplotlib.pyplot.
@@ -365,9 +331,9 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         ''' Here we define the inputs and output of the algorithm. '''
         #
+        self._define_params()
         if is_dependencies_satisfied:
             # Prepare all parameters needed for plotting the colour bar
-            self._define_params()
             for param in sorted(self.the_params, key=self.the_params.__getitem__):
                 b = self.the_params[param][0]
                 qparam = set_param(param, self.the_params)

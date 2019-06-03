@@ -50,16 +50,13 @@ from qgis.core import (QgsProcessingAlgorithm, QgsProcessing,
                        QgsFeatureSink)
 
 from .setparams import set_param
+from .bcHelp import help_bcGeneS
 
 #-----------------------------------------------------------------------------------------
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
 
 the_url = 'http://www.geoproc.com/free/bcGenRNDSurveyData3.htm'
-help_string = """Generate dummy survey data with spikes
-Survey consists of x many lines of any orientation and y many tie lines perpendicular to the lines.
-Data is a periodic signal between -1. and 1. which has noise and spikes added to it.
-Noise is also introduced into the X- and Y-coords of lines and tie lines.
-"""
+help_string = help_bcGeneS
 the_tags = ['random','survey','data','noise','spike','orientation','line','tie']
 #-----------------------------------------------------------------------------------------
 
@@ -192,9 +189,9 @@ class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         ''' Here we define the inputs and output of the algorithm. '''
         #
+        self._define_params()
         if is_dependencies_satisfied:
             # Prepare all parameters needed for plotting the colour bar
-            self._define_params()
             for param in sorted(self.the_params, key=self.the_params.__getitem__):
                 b = self.the_params[param][0]
                 qparam = set_param(param, self.the_params)
