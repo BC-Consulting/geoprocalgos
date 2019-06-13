@@ -32,6 +32,7 @@ from qgis.core import QgsProcessingProvider
 
 from .bcCBar_algorithm             import bcCBarAlgorithm
 from .bcSaveqml_algorithm          import bcSaveqmlAlgorithm
+from .bcMultiStyles_algorithm      import bcMultiStylesAlgorithm
 from .bcStackP_algorithm           import bcStackPAlgorithm
 from .bcGenRNDSurveyData_algorithm import bcGenRNDSurveyDataAlgorithm
 from .bcclr2tbl_algorithm          import bcclr2tblAlgorithm
@@ -49,6 +50,7 @@ class geoprocProvider(QgsProcessingProvider):
         # Load algorithms
         self.alglist = [bcCBarAlgorithm(),
                         bcSaveqmlAlgorithm(),
+                        bcMultiStylesAlgorithm(),
                         bcStackPAlgorithm(),
                         bcclr2tblAlgorithm(),
                         bcSwapYZAlgorithm(),

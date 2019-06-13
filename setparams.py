@@ -2,20 +2,22 @@
 """
 Little function to handle qparam creation
 
-    RasterLayer
-    VectorLayer
-    MultipleLayers
-    File
-    Field
+    Bool
+    CRS
     Enum
-    String
+    EXTENT
+    Field
+    File
+    FileDestination
+    FolderDestination
+    MLayer
+    MultipleLayers
     NumberD
     NumberI
-    Bool
-    FileDestination
-    CRD
-    EXTENT
+    RasterLayer
     SINK
+    String
+    VectorLayer
     
 @author: benoit
 """
@@ -31,25 +33,30 @@ from qgis.core import (
                        QgsProcessingParameterField,
                        QgsProcessingParameterFile,
                        QgsProcessingParameterFileDestination,
+                       QgsProcessingParameterFolderDestination,
+                       QgsProcessingParameterMapLayer,
                        QgsProcessingParameterMultipleLayers,
                        QgsProcessingParameterNumber,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterString,
                        )
 
-dicoparams = {   'RasterLayer':QgsProcessingParameterRasterLayer,
-                 'VectorLayer':QgsProcessingParameterFeatureSource,
-              'MultipleLayers':QgsProcessingParameterMultipleLayers,
-                        'File':QgsProcessingParameterFile,
-                       'Field':QgsProcessingParameterField,
-                      'String':QgsProcessingParameterString,
+dicoparams = {
                         'Bool':QgsProcessingParameterBoolean,
-                     'NumberD':QgsProcessingParameterNumber,
-                     'NumberI':QgsProcessingParameterNumber,
-             'FileDestination':QgsProcessingParameterFileDestination,
                          'CRS':QgsProcessingParameterCrs,
                       'EXTENT':QgsProcessingParameterExtent,
-                        'SINK':QgsProcessingParameterFeatureSink
+                       'Field':QgsProcessingParameterField,
+                        'File':QgsProcessingParameterFile,
+             'FileDestination':QgsProcessingParameterFileDestination,
+           'FolderDestination':QgsProcessingParameterFolderDestination,
+                      'MLayer':QgsProcessingParameterMapLayer,
+              'MultipleLayers':QgsProcessingParameterMultipleLayers,
+                     'NumberD':QgsProcessingParameterNumber,
+                     'NumberI':QgsProcessingParameterNumber,
+                 'RasterLayer':QgsProcessingParameterRasterLayer,
+                        'SINK':QgsProcessingParameterFeatureSink,
+                      'String':QgsProcessingParameterString,
+                 'VectorLayer':QgsProcessingParameterFeatureSource,
              }
 
 FlagsAdv = QgsProcessingParameterDefinition.FlagAdvanced
@@ -84,7 +91,6 @@ def set_param(param, the_params):
                                             [s for s in arg[3]['list']],
                                             **dico
                                            )
-    #
     if qparam != None:
         if 100 <= arg[0] < 1000:
             qparam.setFlags(qparam.flags() | FlagsAdv)

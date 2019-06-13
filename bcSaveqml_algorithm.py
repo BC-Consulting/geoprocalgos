@@ -93,10 +93,9 @@ class bcSaveqmlAlgorithm(QgisAlgorithm):
 
     def _save_qml(self, theLayer):
         ''' Save the layer style to a qml file. '''
-        #
+        #                         path/to/file/layerName.ext|layername:layerName
         theFile  = os.path.splitext(theLayer.source())[0] + ".qml"
-        tempname = os.path.join(self.tmpDir, theFile)
-        _, flg   = theLayer.saveNamedStyle(tempname)
+        _, flg   = theLayer.saveNamedStyle(theFile)
         #
         return flg
     #-------------------------------------------------------------------------------------

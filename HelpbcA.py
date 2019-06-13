@@ -112,3 +112,21 @@ help_bcclr2tbl = """Style a raster with a GoldenSoftware Surfer .clr file (Versi
 * <b>clr file</b> [required]: Surfer .clr file to style the input raster with.
 * <b>Output</b> [optional]: Converted QGIS colour map file in output.
 """
+
+help_bcMultiStyles = """Load and save all layer's styles from/to qml files.<br/>
+qml files should have the following format (i.e. sidecar):
+<b>layerName_styleName.qml</b>
+Where: <em>layerName</em> is the same name as the layer the qml relates to.
+<em>styleName</em> is the name of the style given in Style Manager.<br/>
+
+* <b>Input layer</b> [required]: The layer to act on.
+* <b>Save</b> [required]: Save all styles in different qml files. Default False, implying a load operation.
+* <b>Force load</b>: If True try to load all qml's from directory. If False, load layer's qml sidecars. No effect if Save is True.
+* <b>qml Directory</b> [required]: Directory to load/save qml from/to.<br/>
+* <b>Output Result file</b> [optional]: A HTML file showing the results of the operation. Leave empty to save to Layer source directory.<br/>
+
+If <em>Save</em> is True each layer's style is saved to its own qml.
+If <em>Save</em> is False (default) qml's are read from files and added to the layer's Style Manager.
+If <em>Force load</em> is False, only sidecar qml's following the above naming convention are loaded. Otherwise all qml's in the directory are loaded, if possible.
+ """
+ 

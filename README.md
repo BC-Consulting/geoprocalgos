@@ -27,6 +27,19 @@
   </blockquote>
 </blockquote>
 
+<p><img src="http://www.geoproc.com/free/img/bcMultiStyles.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;<strong>bcMultiStyles<sup>3</sup></strong>: Load/save multiple styles in qml's to/from a QGIS layer. The styles are saved as <a href="https://en.wikipedia.org/wiki/Sidecar_file" target="_blank">sidecars</a> in the same directory of the layer file, by default. Loading styles can be done from the sidecars or from a directory.</p>
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <blockquote>
+        <p>QGIS version 3.x (not compatible with versions &le; 2).<br />
+        No external dependencies<br />
+        Description page <a href="http://www.geoproc.com/free/bcMultiStyles3.htm">here</a>.</p>
+      </blockquote>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
 <p><img src="http://www.geoproc.com/free/img/bcStackP.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;<strong>bcStackP<sup>3</sup></strong>: Create stacked profiles from point layers.</p>
 <p>In geophysics, stacked profiles are commonly used to display geophysical data (magnetic, gravity, electromagnetic, electric, radiometric, ...) over the lines on which the data has been acquired. Correctly displayed they will show trends and anomalous areas that can be of interest.</p>
 <blockquote>
@@ -88,4 +101,4 @@ Add "http://www.geoproc.com/free/plugins.xml" to QGIS plugin repositories source
 
 ---
 
-Last updated: 13 June 2019 - Version 3.9
+Last updated: 13 June 2019 - Version 3.10
