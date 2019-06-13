@@ -35,7 +35,7 @@ from qgis.core import (QgsProcessingUtils, QgsProcessing)
 from processing.algs.qgis.QgisAlgorithm import QgisAlgorithm
 
 from .setparams import set_param
-from .bcHelp import help_bcSaveqml
+from .HelpbcA import help_bcSaveqml
 is_dependencies_satisfied = True
 
 #-----------------------------------------------------------------------------------------

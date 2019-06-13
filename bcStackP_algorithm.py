@@ -54,7 +54,7 @@ from qgis.core import (QgsFeature,
                        QgsStatisticalSummary,
                        QgsWkbTypes)
 from .setparams import set_param
-from .bcHelp import help_bcStackP
+from .HelpbcA import help_bcStackP
 #-----------------------------------------------------------------------------------------
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
 

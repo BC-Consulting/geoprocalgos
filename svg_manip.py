@@ -23,7 +23,8 @@
 ==========================================================================================
 
 figure_1
- - axes_2                   dummy axes: out
+ - axex_3                   if exists, delete
+ - axes_2                   dummy axes: out, if no axes_3, oherwise this is alternate tick
  + axes_1
  
      text_n+1 ... text_m:   title    (m > n+1)
@@ -45,8 +46,9 @@ figure_1
 
 What to do:
     - remove patch_1
-    - remove axes_2
-    - resize svg to axes_1
+    - remove axes_3 and possibly axes_2
+    - unwrap axes_1 and possible axes_2
+    - resize svg
 
 path commands are:
     Absolute coords (uppercase)  -  Relatice coords (lowercase: m, l, h, v, q)
@@ -81,6 +83,7 @@ class bc_svg():
         #
         self.init = False
         self.the_svg_file = the_svg_file
+        self.err = ''
         #
         try:
             dom = get_dom(the_svg_file)
@@ -90,21 +93,27 @@ class bc_svg():
             self.version = self.the_svg['version']
             self.vb = self.the_svg['viewbox']
             self.init = True
-            self.err = ''
-            #
-            # Remove useless elements
-            gs = dom.find('g', {'id':'patch_1'})
-            gs.decompose()
-            gs = dom.find('g', {'id':'axes_2'})
-            gs.decompose()
-            gs = dom.find('g', {'id':'figure_1'})
-            gs.unwrap()
-            gs = dom.find('g', {'id':'matplotlib.axis_1'})
-            gs.unwrap()
-            gs = dom.find('g', {'id':'matplotlib.axis_2'})
-            gs.unwrap()
         except:
             self.err = self._the_strings["E_NOPARSE"]
+            #
+        # Remove useless elements 
+        gs = dom.find('g', {'id':'patch_1'})
+        if gs != None: gs.decompose()
+        a3 = dom.find('g', {'id':'axes_3'})
+        gs = dom.find('g', {'id':'axes_2'})
+        if a3 == None:
+            if gs != None: gs.decompose()
+        else:
+            a3.decompose
+            gs.unwrap()
+        gs = dom.find('g', {'id':'axes_1'})
+        if gs != None: gs.unwrap()
+        gs = dom.find('g', {'id':'matplotlib.axis_1'})
+        if gs != None: gs.unwrap()
+        gs = dom.find('g', {'id':'matplotlib.axis_2'})
+        if gs != None: gs.unwrap()
+        gs = dom.find('g', {'id':'matplotlib.axis_3'})
+        if gs != None: gs.unwrap()
     #-------------------------------------------------------------------------------------
 
     def _format_id(self, L):
@@ -276,7 +285,7 @@ class bc_svg():
             g.decompose()
 
         # find dimensions of the colour bar (only, no text) => paths define rectangles
-        self.patch1 = self.the_svg.find('g', {'id':'axes_1'})
+        self.patch1 = self.the_svg.find('g', {'id':'figure_1'})
         pths = self.patch1.find_all('path')
 
         xmin = 1e6
@@ -330,6 +339,13 @@ class bc_svg():
             #  <use x="142.089844" xlink:href="..."></use>
             # </g>
             #</g>
+            
+            
+            print(text['id'])
+            
+            
+            
+            
             trans = text.g['transform']
             xytr, xysc = self._get_trSc(trans)           # global transform for this text
             uses = text.find_all('use')                 # all characters in this text
@@ -376,10 +392,10 @@ class bc_svg():
         # Global translate to get the scalebar into the view box
         self.trans = 'translate(%0.6f %0.6f)' % (-xmin, -ymin)
 
-#        print('xmax', xmax, 'xmin', xmin, 'ymax', ymax, 'ymin', ymin)
-#        print('x0 0.0 y0 0.0' 'w1', self.w1, 'h1', self.h1)
-#        print('w', self.w, 'h', self.h, 'vbox', self.vb)
-#        print('vbox1', self.vb1, 'trans', self.trans)
+        print('xmax', xmax, 'xmin', xmin, 'ymax', ymax, 'ymin', ymin)
+        print('x0 0.0 y0 0.0' 'w1', self.w1, 'h1', self.h1)
+        print('w', self.w, 'h', self.h, 'vbox', self.vb)
+        print('vbox1', self.vb1, 'trans', self.trans)
         #
         return True
     #-------------------------------------------------------------------------------------
@@ -414,20 +430,3 @@ class bc_svg():
         #
         return True
 #=========================================================================================
-
-# Remove for production....
-if __name__ == '__main__':
-
-    # Testing
-
-    the_dir = r'E:\Dev\bcc_QGIS_Plugins\git\bccscbar\dev\qml-examples'
-    the_file = 'N40E008_H21Fb.svg'
-    my_svg = bc_svg(os.path.join(the_dir, the_file))
-
-    if my_svg.is_init():
-        if not my_svg.auto_process():
-            print(my_svg.get_error())
-        else:
-            print('All ok!!')
-    else:
-        print(my_svg.get_error())

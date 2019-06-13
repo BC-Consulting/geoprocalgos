@@ -50,7 +50,7 @@ from qgis.core import (QgsProcessingAlgorithm, QgsProcessing,
                        QgsFeatureSink)
 
 from .setparams import set_param
-from .bcHelp import help_bcGeneS
+from .HelpbcA import help_bcGeneS
 
 #-----------------------------------------------------------------------------------------
 plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')

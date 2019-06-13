@@ -34,11 +34,11 @@ from qgis.core import (QgsProcessingAlgorithm,
                        QgsMapLayer)
 
 from .setparams import set_param
-from .bcCBar3 import bcColorBar
-from .bcHelp import help_bcCBar
+from .CBar3 import bcColorBar
+from .HelpbcA import help_bcCBar
 
 # Check for dependencies
-from .bcCBar3 import is_bs4_available, is_mpl_available, is_PIL_available
+from .CBar3 import is_bs4_available, is_mpl_available, is_PIL_available
 is_dependencies_satisfied = is_bs4_available and is_mpl_available and is_PIL_available
 
 #-----------------------------------------------------------------------------------------
@@ -66,6 +66,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
     CBWH          = 'CBWH'
     TICKSEP       = 'TICKSEP'
     OFFSET        = 'OFFSET'
+    LABEL_ALT     = 'LABEL_ALT'
     LABEL_BOTH    = 'LABEL_BOTH'
     LABEL_ON      = 'LABEL_ON'
     FONT_SIZE     = 'FONT_SIZE'
@@ -87,7 +88,8 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
     _ori_lst = ['Vertical', 'Horizontal']
     _tick_lst = ['right', 'left', 'top', 'bottom', 'none']
 
-    _the_strings = {"ERR":"ERROR",
+    _the_strings = {"VERSION":"Version 3.2",
+                    "ERR":"ERROR",
                     "ERR_NOONEBAND":"ERROR: Input is not a one-band raster!",
                     "ERR_NOSAVEQML":"ERROR: Cannot save .qml file in temp directory!",
                     "ERR_NOSIDECAR":" And, no qml side-car found.",
@@ -106,6 +108,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                                  0: discrete, 1: linear, 2: exact and 3: paletted</li>
                              <li>number: Colour mode: 1: Continuous, 2: Equal interval,
                                  3: Quantile</li>
+                             <li>T or F: alternate ticks on both side (T) or not (F)</li>
                              <li>T or F: annotate both sides of the scalebar (T)
                                  or not (F)</li>
                              <li>letter: tick position: one of n (none), l (left), 
@@ -116,7 +119,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
     _pstr = ['Input one-band raster', 'Scalebar orientation', 'Title', 'Sub-title',
             'Number of decimals to display', 'Colour scalebar ratio: width/length',
             'Tick separation', 'Ticks offset to arrive at nice numbers', 
-            'Ticks on both side?', 'Ticks position', 'Ticks font size (relative)', 
+            'Ticks on both sides?', 'Ticks position', 'Ticks font size (relative)', 
             'Title font size (relative to ticks font)', 
             'Sub-title font size (relative to ticks font)',
             'Colour scalebar frame thickness (points)',
@@ -127,7 +130,8 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
             'Dividers colour (r,g,b,a) [0., 1.] or colour name',
             'Reverse colour scalebar?', 'Output a png file as well? (SVG by default)',
             'Additional parameters. See home page for help.',
-            'Result file', 'HTML files (*.html)', 'All files (*.*)']
+            'Result file', 'HTML files (*.html)', 'All files (*.*)',
+            'Alternate ticks on both axis?']
 
     def __init__(self):
         super().__init__()
@@ -152,6 +156,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                                {'defaultValue':0.1,'minValue':0.001,'maxValue':1.0},True],
            self.OFFSET:       [110,self._pstr[7],'NumberD',
                                {'defaultValue':0.,'minValue':-100.,'maxValue':100.},True],
+           self.LABEL_ALT:    [115,self._pstr[25],'Bool',{'defaultValue':False},True],
            self.LABEL_BOTH:   [120,self._pstr[8],'Bool',{'defaultValue':False},True],
            self.LABEL_ON:     [130,self._pstr[9],'Enum',
                                {'list':self._tick_lst,'defaultValue':0},True],
@@ -231,7 +236,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
             return False
     #-------------------------------------------------------------------------------------
 
-    def _continue_proc(self, mycb, ori, labboth, output_file):
+    def _continue_proc(self, mycb, ori, labboth, labalt, output_file):
         ''' Continue processing. '''
         #
         if self.xtrap != '':
@@ -239,7 +244,11 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
         #
         vh = '_' + self._ori_lst[ori][0] + str(mycb.nMode) + str(mycb.cm)
         self.dico['label_on'] = mycb.Labelson
-        output_file = output_file + vh + str(labboth)[0] + mycb.Labelson[0] + '.svg'
+        if labalt:
+            ss = 'FT'
+        else:
+            ss = str(labboth)[0] + 'F'
+        output_file = output_file + vh + ss + mycb.Labelson[0] + '.svg'
         mycb.set_out_file(output_file)
         #
         if mycb.draw_cb():
@@ -277,6 +286,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
             f.write('<meta http-equiv="Content-Type" content="text/html;') 
             f.write(' charset=utf-8" />\n</head>\n<body>\n')
             if self._error != '':
+                f.write('<p><em>%s</em></p>\n' % (self._the_strings["VERSION"]))
                 f.write('<h1>%s</h1>\n' % self.tr(self._the_strings["ERR"]))
                 f.write('<p style="color:red;">%s</p>\n' % self.tr(self._error))
             #
@@ -386,16 +396,20 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
         else:
             output_file = os.path.splitext(output_file)[0]
 
-        ori           = self.parameterAsInt(parameters, self.ORI, context)
+        ori           = self.parameterAsInt(parameters,      self.ORI, context)
         self.ori      = self._ori_lst[ori].lower()
-        label_on      = self.parameterAsInt(parameters, self.LABEL_ON, context)
+        label_on      = self.parameterAsInt(parameters,      self.LABEL_ON, context)
         labelon       = self._tick_lst[label_on]
-        divider_color = self.parameterAsString(parameters, self.DIVIDER_COLOR, context)
-        border_color  = self.parameterAsString(parameters, self.BORDER_COLOR, context)
-        title_color   = self.parameterAsString(parameters, self.TITLE_COLOR, context)
-        units_color   = self.parameterAsString(parameters, self.UNITS_COLOR, context)
-        labboth       = self.parameterAsBool(parameters,   self.LABEL_BOTH, context)
-        the_titre     = self.parameterAsString(parameters, self.TITLE, context)
+        divider_color = self.parameterAsString(parameters,   self.DIVIDER_COLOR, context)
+        border_color  = self.parameterAsString(parameters,   self.BORDER_COLOR, context)
+        title_color   = self.parameterAsString(parameters,   self.TITLE_COLOR, context)
+        units_color   = self.parameterAsString(parameters,   self.UNITS_COLOR, context)
+        labalt        = self.parameterAsBool(parameters,     self.LABEL_ALT, context)
+        if labalt:
+            labboth = False
+        else:
+            labboth       = self.parameterAsBool(parameters, self.LABEL_BOTH, context)
+        the_titre     = self.parameterAsString(parameters,   self.TITLE, context)
         the_titre = the_titre.replace('\\n', 'ÿ')
 
         self.dico = {'ori': self.ori,
@@ -405,6 +419,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                     'cbwh': self.parameterAsDouble(parameters, self.CBWH, context),
                  'ticksep': self.parameterAsDouble(parameters, self.TICKSEP, context),
                   'offset': self.parameterAsDouble(parameters, self.OFFSET, context),
+               'label_alt': labalt,
               'label_both': labboth,
                 'label_on': labelon,
                'font_size': self.parameterAsDouble(parameters, self.FONT_SIZE, context),
@@ -424,7 +439,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
 
         mycb = bcColorBar(qml_file, '', **self.dico)
         if mycb.get_init_state():
-            output_file = self._continue_proc(mycb, ori, labboth, output_file)
+            output_file = self._continue_proc(mycb, ori, labboth, labalt, output_file)
         else:
             self._error = mycb.get_error()
             if self._error == mycb.the_strings["E_NOSTYLE"]:

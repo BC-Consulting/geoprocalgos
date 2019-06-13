@@ -41,6 +41,33 @@
   </blockquote>
 </blockquote>
 
+<p><img src="http://www.geoproc.com/free/img/bcclr2tbl.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;<strong>bcclr2tbl<sup>3</sup></strong>: Style a one-band raster layer using Golden Software Surfer colour ramp files (.clr).</p>
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <blockquote>
+        <p>QGIS version 3.x (not compatible with versions &le; 2).<br />
+        No External dependencies<br />
+        Description page <a href="http://www.geoproc.com/free/bcclr2tbl3.htm">here</a>.</p>
+      </blockquote>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p><img src="http://www.geoproc.com/free/img/bcSwapYZ.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;<strong>bcSwapYZ<sup>3</sup></strong>: Create a 3D vector by setting Z-coord to Y-coord and setting Y-coord to a constant.</p>
+<p>This algo is for use in a 2D to 3D workflow, where QGIS raster georeferencer is used to digitalise a section (XZ) into an XY-raster, which is then digitalised (XY) and needs to be rotated to XZ-coords.</p>
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <blockquote>
+        <p>QGIS version 3.x (not compatible with versions &le; 2).<br />
+        No External dependencies<br />
+        Description page <a href="http://www.geoproc.com/free/bcSwapYZ3.htm">here</a>.</p>
+      </blockquote>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
 <p><img src="http://www.geoproc.com/free/img/bcGenRNDSurveyData.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;<em>Just for fun!</em> - <strong>bcGenRNDSurveyData<sup>3</sup></strong>: Create dummy survey with line, tie-lines and noisy data.</p>
 <p>Lines and tie lines are not straight lines. Noise is added to the X- &amp; Y-coords. Data is a periodic function with lots of noise and spikes.</p>
 <blockquote>
@@ -61,4 +88,4 @@ Add "http://www.geoproc.com/free/plugins.xml" to QGIS plugin repositories source
 
 ---
 
-Last updated: 3 June 2019 - Version 3.8
+Last updated: 13 June 2019 - Version 3.9
