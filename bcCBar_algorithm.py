@@ -42,7 +42,7 @@ from .CBar3 import is_bs4_available, is_mpl_available, is_PIL_available
 is_dependencies_satisfied = is_bs4_available and is_mpl_available and is_PIL_available
 
 #-----------------------------------------------------------------------------------------
-plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
+plugin_path = os.path.dirname(__file__))
 
 the_url = 'http://www.geoproc.com/free/bccbar3.htm'
 help_string = help_bcCBar
@@ -481,13 +481,13 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
     def icon(self):
         ''' Returns a QIcon for the algorithm. '''
         #
-        return QIcon(os.path.join(plugin_path, 'res', 'bcCBar.svg'))
+        return QIcon(os.path.join(plugin_path, 'res/bcCBar.svg'))
     #-------------------------------------------------------------------------------------
 
     def svgIconPath(self):
         ''' Returns a path to an SVG version of the algorithm's icon. '''
         #
-        return os.path.join(plugin_path, 'res', 'bcCBar.svg')
+        return os.path.join(plugin_path, 'res/bcCBar.svg')
     #-------------------------------------------------------------------------------------
 
     def helpUrl(self):

@@ -38,7 +38,7 @@ from .bcGenRNDSurveyData_algorithm import bcGenRNDSurveyDataAlgorithm
 from .bcclr2tbl_algorithm          import bcclr2tblAlgorithm
 from .bcSwapYZ_algorithm           import bcSwapYZAlgorithm
 
-plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
+plugin_path = os.path.dirname(__file__)
 
 class geoprocProvider(QgsProcessingProvider):
 
@@ -61,13 +61,13 @@ class geoprocProvider(QgsProcessingProvider):
     def icon(self):
         """ Returns a QIcon for the algorithm. """
         #
-        return QIcon(os.path.join(plugin_path, 'res', 'geoproc.svg'))
+        return QIcon(os.path.join(plugin_path, 'res/geoproc.svg'))
     #-------------------------------------------------------------------------------------
 
     def svgIconPath(self):
         """ Returns a path to an SVG version of the algorithm's icon. """
         #
-        return os.path.join(plugin_path, 'res', 'geoproc.svg')
+        return os.path.join(plugin_path, 'res/geoproc.svg')
     #-------------------------------------------------------------------------------------
 
     def unload(self):

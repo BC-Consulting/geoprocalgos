@@ -42,7 +42,7 @@ from .HelpbcA import help_bcSwapYZ
 is_dependencies_satisfied = True
 
 #-----------------------------------------------------------------------------------------
-plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
+plugin_path = os.path.dirname(__file__)
 
 the_url = 'http://www.geoproc.com/free/bcSwapYZ3.htm'
 help_string = help_bcSwapYZ
@@ -248,13 +248,13 @@ class bcSwapYZAlgorithm(QgsProcessingAlgorithm):
     def icon(self):
         ''' Returns a QIcon for the algorithm. '''
         #
-        return QIcon(os.path.join(plugin_path, 'res', 'bcSwapYZ.svg'))
+        return QIcon(os.path.join(plugin_path, 'res/bcSwapYZ.svg'))
     #-------------------------------------------------------------------------------------
 
     def svgIconPath(self):
         ''' Returns a path to an SVG version of the algorithm's icon. '''
         #
-        return os.path.join(plugin_path, 'res', 'bcSwapYZ.svg')
+        return os.path.join(plugin_path, 'res/bcSwapYZ.svg')
     #-------------------------------------------------------------------------------------
 
     def helpUrl(self):

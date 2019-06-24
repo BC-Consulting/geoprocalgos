@@ -38,7 +38,7 @@ from .HelpbcA import help_bcMultiStyles
 
 is_dependencies_satisfied = True
 #-----------------------------------------------------------------------------------------
-plugin_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'geoprocAlgos')
+plugin_path = os.path.dirname(__file__)
 
 the_url = 'http://www.geoproc.com/free/bcMultiStyles3.htm'
 help_string = help_bcMultiStyles
@@ -240,13 +240,13 @@ class bcMultiStylesAlgorithm(QgsProcessingAlgorithm):
     def icon(self):
         ''' Returns a QIcon for the algorithm. '''
         #
-        return QIcon(os.path.join(plugin_path, 'res', 'bcMultiStyles.svg'))
+        return QIcon(os.path.join(plugin_path, 'res/bcMultiStyles.svg'))
     #-------------------------------------------------------------------------------------
 
     def svgIconPath(self):
         ''' Returns a path to an SVG version of the algorithm's icon. '''
         #
-        return os.path.join(plugin_path, 'res', 'bcMultiStyles.svg')
+        return os.path.join(plugin_path, 'res/bcMultiStyles.svg')
     #-------------------------------------------------------------------------------------
 
     def helpUrl(self):
