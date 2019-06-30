@@ -42,7 +42,7 @@ from .CBar3 import is_bs4_available, is_mpl_available, is_PIL_available
 is_dependencies_satisfied = is_bs4_available and is_mpl_available and is_PIL_available
 
 #-----------------------------------------------------------------------------------------
-plugin_path = os.path.dirname(__file__))
+plugin_path = os.path.dirname(__file__)
 
 the_url = 'http://www.geoproc.com/free/bccbar3.htm'
 help_string = help_bcCBar
