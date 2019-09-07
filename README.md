@@ -95,7 +95,7 @@
   </blockquote>
 </blockquote>
 
-Download zip file [here](http://www.geoproc.com/be/geoprocAlgos.zip) for manual installation.
+Download zip file [here](http://www.geoproc.com/be/support/geoprocAlgos.zip) for manual installation.
 
 Add "http://www.geoproc.com/be/plugins.xml" to QGIS plugin repositories source for automatic installation. See HowTo [here](http://www.geoproc.com/be/repinst3.htm).
 
