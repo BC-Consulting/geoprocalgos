@@ -30,12 +30,12 @@ __revision__ = '$Format:%H$'
 import os, codecs, uuid
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import (QgsProcessingAlgorithm,
-                       QgsProcessingUtils,
-                       QgsMapLayer)
+                       QgsProcessingUtils)
 
 from .setparams import set_param
 from .CBar3 import bcColorBar
 from .HelpbcA import help_bcCBar
+from .QgsBcUtils import check_oneband, save_qml, check_color, check_qml_sidecar
 
 # Check for dependencies
 from .CBar3 import is_bs4_available, is_mpl_available, is_PIL_available
@@ -44,7 +44,7 @@ is_dependencies_satisfied = is_bs4_available and is_mpl_available and is_PIL_ava
 #-----------------------------------------------------------------------------------------
 plugin_path = os.path.dirname(__file__)
 
-the_url = 'http://www.geoproc.com/free/bccbar3.htm'
+the_url = 'https://www.geoproc.com/free/bccbar3.htm'
 help_string = help_bcCBar
 svg_note = """<p>"It is known that some vector graphics viewers (svg and pdf) 
 renders white gaps between segments of the colorbar. This is due to bugs in the viewers, 
@@ -88,7 +88,9 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
     _ori_lst = ['Vertical', 'Horizontal']
     _tick_lst = ['right', 'left', 'top', 'bottom', 'none']
 
-    _the_strings = {"VERSION":"Version 3.2",
+    _ico = 'bcCbar'
+    _the_strings = {"ALGONAME":"Create Colour Scalebar",
+                    "VERSION":"Version 3.3",
                     "ERR":"ERROR",
                     "ERR_NOONEBAND":"ERROR: Input is not a one-band raster!",
                     "ERR_NOSAVEQML":"ERROR: Cannot save .qml file in temp directory!",
@@ -96,7 +98,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                     "ERR_NOQML":"ERROR: Input file is neither a raster neither a .qml!",
                     "ERR_DEP":"ERROR: Some needed dependencies are not installed!",
                     "DEP_LST":"numpy, matplotlib, pillow, bs4 and lxml are needed...",
-                    "CREATE_CS":"Create Colour Scalebar",
+                    "SUCCESS":"Colour bar is created as: ",
                     "SOURCE":"Source",
                     "RESULT":"Result: colour scalebar",
                     "PARAMS":"Parameters Used",
@@ -185,58 +187,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                            {'defaultValue':self._the_strings["DEP_LST"]},False]}
     #-------------------------------------------------------------------------------------
 
-    def _save_qml(self, theLayer):
-        ''' Save the layer style to a qml file. '''
-        #
-        theFile = theLayer.name().split("|")[0] + ".qml"
-        tempname = os.path.join(self.tmpDir, theFile)
-        _, flg = theLayer.saveNamedStyle( tempname )
-        if flg:
-            return [True, tempname]
-        else:
-            return [False, self._the_strings["ERR_NOSAVEQML"]]
-    #-------------------------------------------------------------------------------------
-
-    def _check_color(self, col):
-        ''' Check that col can be interpreted as a colour. '''
-        #
-        if type(col) == list or type(col) == tuple:
-            if len(col) > 2 and len(col) < 5:
-                try:
-                    for i in col:
-                        _ = float(i)
-                except:
-                    return 'black'
-            else:
-                return 'black'
-        elif type(col) != str:
-            return 'black'
-        #
-        return col
-    #-------------------------------------------------------------------------------------
-
-    def _check_oneband(self, F):
-        ''' Check that the given file is a one-band raster. '''
-        #
-        if F is None or F.type() != QgsMapLayer.RasterLayer:
-            return False
-        elif F.rasterType() > 0:
-            return False
-        else:
-            return True
-    #-------------------------------------------------------------------------------------
-
-    def _check_sidecar(self, the_layer):
-        ''' Check is a qml side-car exist for the raster. '''
-        #
-        qml = os.path.splitext(the_layer.source())[0] + '.qml'
-        if os.path.exists(qml):
-            return qml
-        else:
-            return False
-    #-------------------------------------------------------------------------------------
-
-    def _continue_proc(self, mycb, ori, labboth, labalt, output_file):
+    def _continue_proc(self, mycb, ori, labboth, labalt, output_file, feedback):
         ''' Continue processing. '''
         #
         if self.xtrap != '':
@@ -252,6 +203,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
         mycb.set_out_file(output_file)
         #
         if mycb.draw_cb():
+            feedback.setProgress(80.)
             if not mycb.save_cb():
                 self._error = mycb.get_error()
         else:
@@ -262,14 +214,18 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
     #-------------------------------------------------------------------------------------
 
     def _create_HTML(self, svg_file, the_cb = None):
-        ''' Generate an output html file showing the create colour bar (svg). '''
+        ''' Generate an output html file showing the created colour bar (svg). '''
         #
         # Internationalisation
-        for k in the_cb.xtra:
-            the_cb.xtra[k] = self.tr(the_cb.xtra[k])
-        the_cb.the_strings["EM"] = self.tr(the_cb.the_strings["EM"])
-        the_cb.the_strings["XTRA_PARAMS"] = self.tr(the_cb.the_strings["XTRA_PARAMS"])
-        #-----------------------------------------------------------------------------
+        try:
+            for k in the_cb.xtra:
+                the_cb.xtra[k] = self.tr(the_cb.xtra[k])
+            the_cb.the_strings["EM"] = self.tr(the_cb.the_strings["EM"])
+            the_cb.the_strings["XTRA_PARAMS"] = self.tr(the_cb.the_strings["XTRA_PARAMS"])
+            bCB = True
+        except:
+            bCB = False
+        #.................................................................................
         #
         outputFile = os.path.splitext(svg_file)[0] + "_bcCBar-results.html"
         svg_htm = os.path.split(svg_file)[1]
@@ -330,7 +286,8 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                 f.write(self.tr(self._the_strings['SUFFIX']))
                 #
                 f.write('<hr/>\n<h2>%s</h2>\n' % self.tr(self._the_strings["PARAMS"]))
-                f.write(the_cb.get_params_used(self.the_layer.source(), self.the_params))
+                if bCB:
+                    f.write(the_cb.get_params_used(self.the_layer.source(), self.the_params))
                 f.write('<hr/>\n')
                 f.write(self.tr(svg_note))
             f.write('</body>\n</html>\n')
@@ -378,14 +335,14 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
 
         self.the_layer = self.parameterAsRasterLayer(parameters, self.THE_LAYER, context)
         #
-        if not self._check_oneband(self.the_layer):
+        if not check_oneband(self.the_layer):
             self._error = self._the_strings["ERR_NOONEBAND"]
             fil = self._create_HTML(res_file)
             return {self.OUTPUT:fil}
 
-        bOk, qml_file = self._save_qml(self.the_layer)
-        if not bOk:
-            self._error = qml_file
+        qml_file = save_qml(self.the_layer)
+        if qml_file == '':
+            self._error = self._the_strings["ERR_NOSAVEQML"]
             fil = self._create_HTML(res_file)
             return {self.OUTPUT:fil}
 
@@ -428,36 +385,41 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                 'with_png': self.parameterAsBool(parameters,   self.WITH_PNG, context),
                'border_lw': self.parameterAsDouble(parameters, self.BORDER_LW, context),
               'divider_lw': self.parameterAsDouble(parameters, self.DIVIDER_LW, context),
-           'divider_color': self._check_color(divider_color),
-            'border_color': self._check_color(border_color),
-             'title_color': self._check_color(title_color),
-             'units_color': self._check_color(units_color),
+           'divider_color': check_color(divider_color),
+            'border_color': check_color(border_color),
+             'title_color': check_color(title_color),
+             'units_color': check_color(units_color),
                'breversed': self.parameterAsBool(parameters, self.BREVERSED, context)
         }
 
         self.xtrap = self.parameterAsString(parameters, self.XTRA_PARAM, context)
+        feedback.setProgress(10.)
 
-        mycb = bcColorBar(qml_file, '', **self.dico)
+        mycb = bcColorBar(qml_file, '', feedback, **self.dico)
+        feedback.setProgress(20.)
         if mycb.get_init_state():
-            output_file = self._continue_proc(mycb, ori, labboth, labalt, output_file)
+            output_file = self._continue_proc(mycb, ori, labboth, labalt, output_file,
+                                              feedback)
         else:
             self._error = mycb.get_error()
             if self._error == mycb.the_strings["E_NOSTYLE"]:
                 # This is one band raster but not styled (could be straight from file)
                 # If yes, look for the qml side-car. If not found, abort
-                qml_file = self._check_sidecar(self.the_layer)
+                qml_file = check_qml_sidecar(self.the_layer)
                 if qml_file:
                     self._error = ''
                     b_with_qml = True
                     mycb = bcColorBar(qml_file, '', **self.dico)
                     if mycb.get_init_state():
-                        output_file = self._continue_proc(mycb, ori, labboth, output_file)
+                        output_file = self._continue_proc(mycb, ori, labboth, labalt, 
+                                                          output_file, feedback)
                     else:
                         self._error = mycb.get_error()
                 else:
                     # Not properly styled and no qml side-car
                     self._error = mycb.get_error() + self._the_strings["ERR_NOSIDECAR"]
         #
+        feedback.setProgress(95.)
         if not b_with_qml:
             try:
                 os.remove(qml_file)
@@ -466,9 +428,12 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
 
         if self._error != '':
             fil = self._create_HTML(res_file)
+            feedback.reportError(self._error+'\n', True)
         else:
             fil = self._create_HTML(output_file, mycb)
+            feedback.pushInfo(self._the_strings["SUCCESS"]+output_file+'\n')
         #
+        feedback.setProgress(100.)
         return {self.OUTPUT:fil}
     #-------------------------------------------------------------------------------------
 
@@ -481,13 +446,13 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
     def icon(self):
         ''' Returns a QIcon for the algorithm. '''
         #
-        return QIcon(os.path.join(plugin_path, 'res/bcCBar.svg'))
+        return QIcon(os.path.join(os.path.join(plugin_path, 'res', self._ico+'.svg')))
     #-------------------------------------------------------------------------------------
 
     def svgIconPath(self):
         ''' Returns a path to an SVG version of the algorithm's icon. '''
         #
-        return os.path.join(plugin_path, 'res/bcCBar.svg')
+        return QIcon(os.path.join(os.path.join(plugin_path, 'res', self._ico+'.svg')))
     #-------------------------------------------------------------------------------------
 
     def helpUrl(self):
@@ -518,7 +483,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         '''
-        return self.tr(self._the_strings["CREATE_CS"])
+        return self.tr(self._the_strings["ALGONAME"])
     #-------------------------------------------------------------------------------------
 
     def tags(self):

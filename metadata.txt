@@ -5,7 +5,7 @@
 name=geoprocAlgos
 qgisMinimumVersion=3.0
 description=Collection of Processing algorithms from GeoProc.com
-version=3.12
+version=3.13
 author=GeoProc.com
 email=info@geoproc.com
 about=A collection of Processing-based algorithms to facilitate various QGIS tasks.
@@ -14,7 +14,8 @@ repository=https://github.com/BC-Consulting/geoprocalgos
 # End of mandatory metadata
 
 # Recommended items:
-changelog=V3.12: Correct bug in bcCBar.
+changelog=V3.13: Fix bug in CBar3 crashing when custom parameters as dictionary had comma in their values.
+    V3.12: Correct bug in bcCBar.
     V3.11: Correct bug under Linux not showing icon correctly. Add minimum version for dependencies in help files.
     V3.10: Add bcMultiStyles algorithm. Fix bug in bcSaveqml.
     V3.9 bcCBar: make sure end values are displayed, add option for alternate labelling. Add bccrl2tbl: style with Surfer's colour ramps. Add bcSwapYZ: create a 3D vector layer by moving the Y-coord to the Z-coord and setting Y-coord to constant value. 
@@ -28,7 +29,7 @@ changelog=V3.12: Correct bug in bcCBar.
     V3.1 Fixed major bug in V3.0
     V3.0 Initial version includes bcCBar: colour scale bar for composer
 tags=processing,algorithms,composer,raster,print,legend,svg,png,one-band,oneband,1-band,python,colour,scalebar,scale,bar,qml,style,vector
-homepage=http://www.geoproc.com/free/geoprocalgos.htm
+homepage=https://www.geoproc.com/be/geoprocalgos.htm
 category=composer
 icon=GeoProc.png
 experimental=True

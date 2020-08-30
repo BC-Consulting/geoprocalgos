@@ -34,7 +34,7 @@ Paramaters needed to draw the scalebar are:
 * <b>Divider colour</b> ('black'*)
 * <b>The scalebar can be reversed</b>. False*
 * <b>A png</b> file can be created in addition to the svg file. False*
-* <b>Additional parameters</b> can be defined. See home page for more details.<br/>
+* <b>Additional parameters</b> can be defined. See <a href="https://www.geoproc.com/be/bccbar3.htm#EP">home page</a> for more details.<br/>
 
 * <b>Ouptut</b>: the name of the svg (and png) file(s) representing the generated colour scalebar. A html file is also created that shows the colour scalebar(s) and options used. Click the link in "Result Viewer" to display it in your browser.
 ---
@@ -55,7 +55,7 @@ Save the style of each selected layer in .qml files.
 * <b>Input QGIS raster layers</b> [optional]: Click the button to select raster layers for which .qml file will be created.
 * <b>Result file</b>: a html file that shows results. Leave as is.<br/>
 The qml filename has the same name as the layer and it is located in the same directory.<br/>
-For more information see the home page.
+For more information see the <a href="https://www.geoproc.com/be/bcSaveqml3.htm">home page</a>.
 """
 
 help_bcStackP = """Creates 2D stacked profiles for survey data along lines and tie lines.

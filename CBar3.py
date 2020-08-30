@@ -23,11 +23,13 @@
 #   Test for dependencies -------------------------------------
 try:
     import matplotlib as mpl
-    mpl.use('Agg')
+#    mpl.use('Agg')
     import numpy as np
-    from matplotlib.font_manager import FontProperties
+    from matplotlib.font_manager import FontProperties, FontManager
     import matplotlib.pyplot as plt
     is_mpl_available = True
+##    mpl.rcParams['text.usetex'] = False
+    plt.rc('text', usetex=False)
 except ImportError:
     is_mpl_available = False
 try:
@@ -39,7 +41,7 @@ except ImportError:
 
 plt.ioff()
 
-import os, re
+import os, re, codecs
 from xml.dom import minidom
 try:
     from PIL import Image
@@ -140,9 +142,10 @@ class bcColorBar():
     fsize    = ['xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large']
     # Math font set
     mathfontsets = ['dejavusans', 'dejavuserif', 'cm', 'stix', 'stixsans']
+    ffamilies = ['serif', 'sans-serif', 'cursive', 'fantasy', 'monospace']
     #-------------------------------------------------------------------------------------
 
-    def __init__(self, the_file, the_cbfile, **kwargs):
+    def __init__(self, the_file, the_cbfile, feedback, **kwargs):
         ''' Initialise class with parameters:
 
         my_cb = bcColorBar(the_file, the_cbfile, **kwargs)
@@ -183,6 +186,7 @@ class bcColorBar():
      -------------------------------------------------------------------------------------
         '''
         #
+        self.feedback = feedback
         # Do we have a file to act on?
         if the_file.strip() == '':
             self.error  = self.the_strings["E_NOINF"]
@@ -257,6 +261,7 @@ class bcColorBar():
             self.offset      = offset
             self.breversed   = breversed
             self.isxtra      = False
+            self.arFV        = []
             #
             # Read and parse qml file
             #  results are array of values, labels & colours, and type of colour scalebar
@@ -319,64 +324,74 @@ class bcColorBar():
 
             self.ticks_font_properties.set_family('sans-serif')
             self.ticks_font_properties.set_size(self.fntSize)
+            #
+#            self.feedback.pushInfo('Done init bcColorBar class\n')
     #-------------------------------------------------------------------------------------
 
     def _check_font_properties(self, font0, weight='normal'):
         ''' Check if the given font properties are valid. '''
         #
+        fontd = {'style':'normal', 'variant':'normal', 'stretch':'normal', 'weight':weight, 'size':self.tfont}
         font = self._get_dict(font0)
+#        print('font dico:\n',font,'\n')
         #
         fontp = FontProperties()
-        #      6 parameters in a font properties dictionary
+        fm = FontManager()
+        # Get default, fallback, font filename
+        fontp.set_family('fonteinexistanteithink')
+        fontfile0 = fm.findfont(fontp)
+        # Get filename of font to use (first valid filename is used)
+        if 'family' in font:
+            fnames = font['family'].split(',')
+            for fname in fnames:
+                fontp.set_family(fname)
+                fontfile = fm.findfont(fontp)
+                if fontfile != fontfile0:
+                    fontfile0 = fontfile
+#                    self.feedback.pushInfo('---- font filename found: '+fontfile0)
+                    break
+        #
+        #       6 parameters in a font properties dictionary
         vkey = ['family', 'style', 'variant', 'stretch', 'weight', 'size']
-        for k in font:
+        for k1 in font:
+            k = k1.lower()
             if k not in vkey:
                 return fontp
             #
             if k == 'style':
-                if not font[k] in self.fstyle:
-                    font[k] = 'normal'
-            else:
-                font['style'] = 'normal'
+                if font[k] in self.fstyle:
+                    fontd[k] = font[k]
             if k == 'variant':
-                if not font[k] in self.fvariant:
-                    font[k] = 'normal'
-            else:
-                font['variant'] = 'normal'
+                if font[k] in self.fvariant:
+                    fontd[k] = font[k]
             if k == 'stretch':
                 if not isfloat(font[k]):
-                    if font[k] not in self.fstretch:
-                        font[k] = 'normal'
+                    if font[k] in self.fstretch:
+                        fontd[k] = font[k]
                 else:
-                    if not (0. < float(font[k]) < 1000.):
-                        font[k] = 'normal'
-            else:
-                font['stretch'] = 'normal'
+                    if 0. < float(font[k]) < 1000.:
+                        fontd[k] = font[k]
             if k == 'weight':
                 if not isfloat(font[k]):
-                    if font[k] not in self.fweight:
-                        font[k] = weight
+                    if font[k] in self.fweight:
+                        fontd[k] = font[k]
                 else:
-                    if not (0. < float(font[k]) < 1000.):
-                        font[k] = weight
-            else:
-                font['weight'] = weight
+                    if 0. < float(font[k]) < 1000.:
+                        fontd[k] = font[k]
             if k == 'size':
                 if not isfloat(font[k]):
-                    if font[k] not in self.fsize:
-                        font[k] = 12.
+                    if font[k] in self.fsize:
+                        fontd[k] = font[k]
                 else:
-                    if not (0. < float(font[k]) < 100.):
-                        font[k] = 12.
-            else:
-                font['size'] = 12.
+                    if 0. < float(font[k]) < 100.:
+                        fontd[k] = font[k]
         #
-        fontp.set_family(font['family'])
-        fontp.set_size(font['size'])
-        fontp.set_weight(font['weight'])
-        fontp.set_variant(font['variant'])
-        fontp.set_stretch(font['stretch'])
-        fontp.set_style(font['style'])
+        fontp = FontProperties(style=fontd['style'], variant=fontd['variant'],
+                               weight=fontd['weight'], stretch=fontd['stretch'],
+                               size=fontd['size'], fname=fontfile0)
+        #
+#        self.feedback.pushInfo(str(fontd))
+#        self.feedback.pushInfo(self._fnt_to_str(fontp))
         #
         return fontp
     #-------------------------------------------------------------------------------------
@@ -385,6 +400,7 @@ class bcColorBar():
         ''' Return a string from font properties. '''
         #
         v = 'Family: ' + str(fp.get_family())
+        v += ', Name: ' + str(fp.get_name())
         v += ', Size: ' + str(fp.get_size())
         v += ', Weight: ' + str(fp.get_weight())
         v += ', Variant: ' + str(fp.get_variant())
@@ -424,36 +440,53 @@ class bcColorBar():
         return [float(x) / 255. for x in v.split(',')]
     #-------------------------------------------------------------------------------------
 
+    def __repw__(self, q):
+        ''' Split dic-like string into key:value list. '''
+        #
+        n0 = len(q)
+        q = re.sub(r",'",'ÿ', q)
+        if len(q) < n0:
+            q = q.replace("'","")
+        else:
+            q = re.sub(r',"','ÿ', q)
+            q = q.replace('"', '')
+            if len(q) == n0:
+                q = q.replace("'",'')
+        #
+        return q.split('ÿ')
+    #-------------------------------------------------------------------------------------
+
     def _get_dict(self, dic):
         ''' Create and return a dictionary for a dict-like string. One-level only.
             Any dict-like string as value of top level key is kept as is.
+            String delimiter MUST be the SAME for all key:value pairs in the top
+            level "dict": either ' or ".
         '''
         #
         dic = dic.strip()
-        print(dic)
+#        print(dic)
         if dic[0] != '{' or dic[-1] != '}':
             return {}
         n1, n2 = dic.count('{'), dic.count('}')
         if n1 != n2:
             return {}
         #
-        q = ''.join([str(c) for c in dic])
+        q = ''.join([str(c) for c in dic])  # ??
         q = re.sub(r',\s*', ',', q)
-        q = q[1:-1].replace('"', '').replace("'","")
-        print(q)
         if n1 == 1:
-            q = q.split(',')
+            q = self.__repw__(q[1:-1])
             return {kv.split(':')[0]:kv.split(':')[1] for kv in q if kv != ''}
         else:
             n1 -= 1
             ar = {}
+            q = q[1:-1]
             for n in range(n1):
                 i1 = q.find('{')
                 i2 = q.find('}', i1) + 1
                 k = 'BCCC_%05d' % n 
                 ar[k] = q[i1:i2]
                 q = q[:i1] + k + q[i2:] 
-            q = q.split(',')
+            q = self.__repw__(q)
             a = {kv.split(':')[0]:kv.split(':')[1] for kv in q if kv != ''}
             for ka in a:
                 for k in ar:
@@ -489,6 +522,13 @@ class bcColorBar():
         except:
             self.error = self.the_strings["E_BADFIL"]
             return False
+        #
+        arFV = []
+        if os.path.exists(the_file+'i'):
+            with codecs.open(the_file+'i') as fi:
+                buff = fi.readlines()
+            for e in buff:
+                arFV.append(float(e.replace('\r', '').replace('\n', '')))
         #
         if tag.hasAttribute('version'):
             v = int(tag.getAttribute('version').strip()[0])
@@ -670,13 +710,30 @@ class bcColorBar():
         # Set colour info
         self.vramp = norm         # Normalised colours edge position to [0, 1]
         self.cramp = rgba
-        self.arV   = tV
-        self.arL   = tL
+        if arFV == []:
+            self.arV   = tV
+            self.arL   = tL
+        else:
+            # normalise
+            self.arV = [(v - vmin) / (vmax - vmin) for v in arFV]
+            self.arL = [self._format_label(v) for v in arFV]
         self.nMode = nMode
         self.cm    = cm
         self.error = ''
         #
         return True
+    #-------------------------------------------------------------------------------------
+
+    def __fontprop__(self, fontp):
+        ''' '''
+        #
+        return {  # 'fontfamily':fontp.get_name(),
+                'fontstretch':fontp.get_stretch(),
+                'fontstyle':fontp.get_style(),
+                'fontvariant':fontp.get_variant(),
+                'fontweight':fontp.get_weight(),
+                'fontsize':fontp.get_size()
+                }
     #-------------------------------------------------------------------------------------
 
     def _set_units(self, L, cax, fontd, colo = 'black', pad = None):
@@ -693,8 +750,8 @@ class bcColorBar():
         plt.draw()
         inva = cax.transData.inverted()                            # convert to Data space
         #
-        un = cax.set_title(L, loc=self.units_align, fontproperties=fontd, color=colo,
-                           pad=pad)
+        un = cax.set_title(L, loc=self.units_align, color=colo, fontproperties=fontd,
+                           pad=pad)  #, **self.__fontprop__(fontd))
         #
         plt.draw()
         ubb = un.get_window_extent(self.fig.canvas.get_renderer()) # in display space
@@ -985,6 +1042,7 @@ class bcColorBar():
         # Fonts to be used for title and units
         fontu = self.units_font_properties
         fontt = self.title_font_properties
+#        self.feedback.pushInfo(self._fnt_to_str(fontt))
 
         fig = plt.figure(dpi=self.dpi, figsize=(self.xp, self.yp), #facecolor='c', 
                          clear=True)  #, constrained_layout=False)
@@ -1102,14 +1160,16 @@ class bcColorBar():
             else:
                 xm = (xmin + xmax) / 2.
             Titre = Titre.replace('ÿ', '\n')        # use native multilines capability!!!
-            cax.text(xm, ym, Titre,
-                    horizontalalignment = self.title_align,
-                    verticalalignment   = 'bottom',
-                    fontproperties      = fontt,
-                    color               = title_cl,
-                    transform           = cax.transData)
-
-        fig.tight_layout()
+            t = cax.text(xm, ym, Titre,
+                         horizontalalignment = self.title_align,
+                         verticalalignment   = 'bottom',
+                         fontproperties      = fontt,
+                         color               = title_cl,
+                         transform           = cax.transData)
+#                         **, self.__fontprop__(fontt))
+            print('Title font style: ',t.get_fontstyle())
+            print('Title font family: ',t.get_family(), t.get_name())
+#        fig.tight_layout()
         if self.set_display:
             # Show colour scalebar
             plt.show()
@@ -1151,3 +1211,59 @@ class bcColorBar():
 
         return True
 #=========================================================================================
+
+class myFeedBack():
+    def __init__(self):
+        pass
+    def pushInfo(self, ss):
+        print(ss)
+
+if __name__ == "__main__":
+
+    dic = "{'title_font_properties':{'family':'Harrington','size':12}"
+    dic += ", 'units_font_properties':{'family':'Broadway', 'size':24}}"
+    feedbk = myFeedBack()
+
+    pth = r'E:\Dev\bcc_QGIS_Plugins\git\data\qml-examples'
+    files = ['N40E008.qml', 'SRTM90-3-PE1526.qml', 'v3-Palette.qml',   #  0   1   2
+             'SRTM90-3-PE1526_D-C5.qml', 'SRTM90-3-PE1526_D-EI5.qml',  #  3   4
+             'SRTM90-3-PE1526_D-Q5.qml',                               #  5 
+             'SRTM90-3-PE1526_E-C5.qml', 'SRTM90-3-PE1526_E-EI5.qml',  #  6   7
+             'SRTM90-3-PE1526_E-Q5.qml',                               #  8
+             'SRTM90-3-PE1526_L-C5.qml', 'SRTM90-3-PE1526_L-EI5.qml',  #  9  10
+             'SRTM90-3-PE1526_L-Q5.qml']                               # 11
+
+    fil = files[0]
+    dico = {'ori': 'horizontal',
+                'deci': 0,
+               'title': 'Un titre\nsous-titre',
+               'units': r'units: $\Omega.s^2$',
+                'cbwh': 0.1,
+             'ticksep': 10,
+              'offset': 0,
+          'label_both': True,
+            'label_on': 'top',
+           'font_size': 4,
+               'tfont': 2,
+               'ufont': 1,
+            'with_png': False,
+           'border_lw': .5,
+          'divider_lw': 0.0,
+       'divider_color': 'black',
+        'border_color': 'black',
+         'title_color': 'red',
+         'units_color': 'blue',
+           'breversed': False
+    }
+
+    cb = bcColorBar(os.path.join(pth,fil),'',feedbk, **dico)
+    if cb.get_init_state():
+        print(fil, cb.nMode, cb.cm, len(cb.vramp), len(cb.cramp))
+
+        print(cb.set_extras(dic))
+
+        cb.set_display = True
+        cb.draw_cb()
+
+    else:
+        print('Problem....', cb.get_error())    
