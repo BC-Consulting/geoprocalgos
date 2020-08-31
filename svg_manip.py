@@ -95,6 +95,7 @@ class bc_svg():
             self.init = True
         except:
             self.err = self._the_strings["E_NOPARSE"]
+            dom = get_dom('<html><body></body></html>',btxt=True)
             #
         # Remove useless elements 
         gs = dom.find('g', {'id':'patch_1'})
@@ -104,7 +105,7 @@ class bc_svg():
         if a3 == None:
             if gs != None: gs.decompose()
         else:
-            a3.decompose
+            a3.decompose()
             gs.unwrap()
         gs = dom.find('g', {'id':'axes_1'})
         if gs != None: gs.unwrap()
@@ -430,3 +431,20 @@ class bc_svg():
         #
         return True
 #=========================================================================================
+
+# Remove for production....
+if __name__ == '__main__':
+
+    # Testing
+
+    the_dir = r'E:\Dev\bcc_QGIS_Plugins\git\geoprocAlgos\workpad'
+    the_file = 'SRTM30_PE5110_H11FTb.svg'
+    my_svg = bc_svg(os.path.join(the_dir, the_file))
+
+    if my_svg.is_init():
+        if not my_svg.auto_process():
+            print(my_svg.get_error())
+        else:
+            print('All ok!!')
+    else:
+        print(my_svg.get_error())

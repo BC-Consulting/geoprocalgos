@@ -1236,10 +1236,10 @@ if __name__ == "__main__":
     fil = files[0]
     dico = {'ori': 'horizontal',
                 'deci': 0,
-               'title': 'Un titre\nsous-titre',
-               'units': r'units: $\Omega.s^2$',
+               'title': '', #'Un titre\nsous-titre',
+               'units': '', #r'units: $\Omega.s^2$',
                 'cbwh': 0.1,
-             'ticksep': 10,
+             'ticksep': 1,
               'offset': 0,
           'label_both': True,
             'label_on': 'top',
@@ -1263,7 +1263,10 @@ if __name__ == "__main__":
         print(cb.set_extras(dic))
 
         cb.set_display = True
-        cb.draw_cb()
+        if cb.draw_cb():
+            cb.b_png = True
+            cb.set_out_file(r'E:\test.svg')
+            cb.save_cb()
 
     else:
         print('Problem....', cb.get_error())    

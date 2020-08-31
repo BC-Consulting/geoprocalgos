@@ -90,7 +90,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
 
     _ico = 'bcCbar'
     _the_strings = {"ALGONAME":"Create Colour Scalebar",
-                    "VERSION":"Version 3.3",
+                    "VERSION":"Version 3.4",
                     "ERR":"ERROR",
                     "ERR_NOONEBAND":"ERROR: Input is not a one-band raster!",
                     "ERR_NOSAVEQML":"ERROR: Cannot save .qml file in temp directory!",
