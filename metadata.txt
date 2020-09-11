@@ -5,7 +5,7 @@
 name=geoprocAlgos
 qgisMinimumVersion=3.0
 description=Collection of Processing algorithms from GeoProc.com
-version=3.14
+version=3.15
 author=GeoProc.com
 email=info@geoproc.com
 about=A collection of Processing-based algorithms to facilitate various QGIS tasks.
@@ -14,12 +14,13 @@ repository=https://github.com/BC-Consulting/geoprocalgos
 # End of mandatory metadata
 
 # Recommended items:
-changelog=V3.14 Fix problem with svg creation.
+changelog=V3.15: Fix missing module.
+    V3.14: Fix problem with svg creation.
     V3.13: Fix bug in CBar3 crashing when custom parameters as dictionary had comma in their values.
     V3.12: Correct bug in bcCBar.
     V3.11: Correct bug under Linux not showing icon correctly. Add minimum version for dependencies in help files.
     V3.10: Add bcMultiStyles algorithm. Fix bug in bcSaveqml.
-    V3.9 bcCBar: make sure end values are displayed, add option for alternate labelling. Add bccrl2tbl: style with Surfer's colour ramps. Add bcSwapYZ: create a 3D vector layer by moving the Y-coord to the Z-coord and setting Y-coord to constant value. 
+    V3.9 bcCBar: make sure end values are displayed, add option for alternate labelling. Add bccrl2tbl: style with Surfer's colour ramps. Add bcSwapYZ: create a 3D vector layer by moving the Y-coord to the Z-coord and setting Y-coord to constant value.
     V3.8 bcStackP3: Add dummy value. All: fix dependency warning bug.
     V3.7 bcStackP3: Add global scaling. bcGenRNDSurveyData some changes.
     V3.6 bcStackP3: Make more robust. Add bcGenRNDSurveyData algorithm.
@@ -27,8 +28,8 @@ changelog=V3.14 Fix problem with svg creation.
     V3.4 Fixed other dependency errors...
     V3.3 Fixed error on pillow dependency. Better handling of line directions in Stacked profiles algo.
     V3.2 Added stacked profile algorithm.
-    V3.1 Fixed major bug in V3.0
-    V3.0 Initial version includes bcCBar: colour scale bar for composer
+    V3.1 Fixed major bug in V3.0.
+    V3.0 Initial version includes bcCBar: colour scale bar for composer.
 tags=processing,algorithms,composer,raster,print,legend,svg,png,one-band,oneband,1-band,python,colour,scalebar,scale,bar,qml,style,vector
 homepage=https://www.geoproc.com/be/geoprocalgos.htm
 category=composer

@@ -101,4 +101,4 @@ Add "https://www.geoproc.com/be/plugins.xml" to QGIS plugin repositories source 
 
 ---
 
-Last updated: 31 August 2020 - Version 3.14
+Last updated: 11 September 2020 - Version 3.15
