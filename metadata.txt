@@ -5,7 +5,7 @@
 name=geoprocAlgos
 qgisMinimumVersion=3.0
 description=Collection of Processing algorithms from GeoProc.com
-version=10.1
+version=3.20
 author=GeoProc.com
 email=info@geoproc.com
 about=A collection of Processing-based algorithms to facilitate various QGIS tasks.
@@ -35,5 +35,5 @@ tags=processing,algorithms,composer,raster,print,legend,svg,png,one-band,oneband
 homepage=http://www.geoproc.com/free/geoprocalgos.htm
 category=composer
 icon=GeoProc.png
-experimental=True
+experimental=False
 deprecated=False
