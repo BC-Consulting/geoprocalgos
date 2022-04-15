@@ -1,14 +1,14 @@
 <h1><img src="https://www.geoproc.com/be/img/geoproc.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;geoprocAlgos</h1>
 <p>A collection of <a href="https://qgis.org/en/site/" target="_blank">QGIS</a> V3.x Processing algorithms.</p>
 
-<p><img src="https://www.geoproc.com/be/img/bcCbar.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;<strong>bcCBar<sup>3</sup></strong>: Generate a coulour scalebar from a one-band raster. For use as legend in QGIS Composer.</p>
+<p><img src="https://www.geoproc.com/be/img/bcCbar.png" width="48" height="48" align="absmiddle" />&nbsp;&nbsp;&nbsp;&nbsp;<strong>bcCBar<sup>4</sup></strong>: Generate a coulour scalebar from a one-band raster. For use as legend in QGIS Composer.</p>
 <blockquote>
   <blockquote>
     <blockquote>
       <blockquote>
          <p>QGIS version 3.x (not compatible with versions &le; 2).<br />
          Requires external python modules (numpy, matplotlib, beautifulsoup &amp; lxml)<br />
-         Description page <a href="https://www.geoproc.com/be/bccbar3.htm">here</a>.</p>
+         Description page <a href="https://www.geoproc.com/be/bccbar4.htm">here</a>.</p>
       </blockquote>
     </blockquote>
   </blockquote>
@@ -101,4 +101,4 @@ Add "https://www.geoproc.com/be/plugins.xml" to QGIS plugin repositories source 
 
 ---
 
-Last updated: 11 September 2020 - Version 3.15
+Last updated: 15 April 2022 - Version 3.20
