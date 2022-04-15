@@ -3,6 +3,15 @@
 General QGIS utility functions
 
 @author: benoit
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+WARNING: code formatting does not follow pycodestyle recommendations
 """
 import os, codecs, re
 import numpy as np
@@ -112,7 +121,7 @@ def style_raster(ar, the_layer):
         shader = QgsRasterShader()
         shader.setRasterShaderFunction(fcn)
         renderer = QgsSingleBandPseudoColorRenderer(the_layer.dataProvider(), 
-                                                    the_layer.type(), shader)
+                                                    1, shader)
         the_layer.setRenderer(renderer)
         the_layer.triggerRepaint()
     except:
