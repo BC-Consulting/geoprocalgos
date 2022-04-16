@@ -10,7 +10,7 @@
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
+ *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
@@ -71,20 +71,51 @@ try:
 except:
     is_QGIS_available = False
 
-__version__ = "3.25.1"
+__version__ = "3.25.2"
 
 print('cbar version:', __version__)
 print('    is_mpl_available', is_mpl_available)
 print('    is_bs4_available', is_bs4_available)
 print('    is_QGIS_available', is_QGIS_available)
 
+if not is_QGIS_available:
+    __str1 =  'QML file'
+    __str2 = "<br />   &nbsp; &nbsp; &nbsp; If a QML file, it must be a QGIS V3.x file"
+    __str3 = 'qml file'
+    __str4 = """<b>titlefontname</b>: [str] font name/family: FONTNAME or one of {serif, sans-serif*, cursive, fantasy, monospace}<br />
+<b>titlefontsize</b>: [str|int] title font size (28*) number or one of:<br />
+   &nbsp; &nbsp; &nbsp; {xx-small, x-small, small, medium, large, x-large, xx-large}<br />
+<b>titlefontweight</b>: [str|int] title font weight: number [0, 1000] or one of:<br />
+   &nbsp; &nbsp; &nbsp; {ultralight, light, normal, demibold, bold*, extra bold}<br />
+"""
+    __str5 = "<b>tickfontsize</b>: [str|int] tick label font size (16) or one of the above<br />"
+    __str6 = """<h3><font color="#006">Ticks and labels position:</font></h3>
+<p><b>top</b>: [bool] show thicks/label on top of horizontal colour bar (False)<br />
+<b>bottom</b>: [bool] show thicks/label at bottom of horizontal colour bar (True)<br />
+<b>left</b>: [bool] show thicks/label on left of vertical colour bar (True)<br />
+<b>right</b>: [bool] show thicks/label on right of vertical colour bar (False)</p>
+"""
+else:
+    __str1 = 'raster layer'
+    __str2 = ''
+    __str3 = 'raster layer source'
+    __str4 = """<b>titlefontname</b>: [str] title and labels font family: one of {serif, sans-serif*, cursive, fantasy, monospace}<br />
+<b>titlefontsize</b>: [int] title font size (28*)<br />
+<b>titlefontweight</b>: [str] title font weight: one of {ultralight, light, normal, demibold, bold*, extra bold}<br />
+"""
+    __str5 = "<b>tickfontsize</b>: [int] tick label font size (16)<br />"
+    __str6 = """<h3><font color="#006">Location of ticks and labels</font></h3>
+<p><b>Label_on</b>: where to place ticks and labels.<br />
+ &nbsp; &nbsp; &nbsp; &nbsp; Left, Right or None for vertical colour bar. (left)<br />
+ &nbsp; &nbsp; &nbsp; &nbsp; Bottom, Top or None for horizontal colour bar. (bottom)<br />
+<b>Additional location of ticks and labels</b>: Ticks and labels can be duplicated on the other side of the colour bar. (None)</p>
+"""
 cbar_usage = '''<h1>Usage</h1>
-<p><b>qml_file</b>: [str] full name of the QML file to draw colour bar from.<br />
-   &nbsp; &nbsp; &nbsp; The QML file must be a QGIS V3.x file.</p>
+<p><b>qml_file</b>: [str] full name of the %s to draw colour bar from.%s</p>
 <hr />
 <h2><font color="#600">Optional parameters:-</font></h2>
 <p><b>svg_file</b>: [str] (None) name of the svg file storing the colour bar.<br />
-   &nbsp; &nbsp; &nbsp; If None (default) the qml_file is used to set the svg name.</p>
+   &nbsp; &nbsp; &nbsp; If None (default) the %s is used to set the svg name.</p>
 <h3><font color="#006">Colour bar:</font></h3>
 <p><b>orientation</b>: [str] ('horizontal'* | 'vertical'): colour bar orientation<br />
 <b>spacing</b>: [str] ('uniform'* | 'proportional'): colour boxes lengths<br />
@@ -95,12 +126,8 @@ cbar_usage = '''<h1>Usage</h1>
 <hr />
 <h3><font color="#006">Title:</font></h3>
 <p><b>title</b>: [str] colour bar label ('')<br />
-<b>titlefontname</b>: [str] font name/family: FONTNAME or one of {'serif', 'sans-serif'*, 'cursive', 'fantasy', 'monospace'}<br />
-<b>titlefontsize</b>: [str|int] title font size (28*) number or one of:<br />
-   &nbsp; &nbsp; &nbsp; {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}<br />
-<b>titlefontweight</b>: [str|int] title font weight: number [0, 1000] or one of:<br />
-   &nbsp; &nbsp; &nbsp; {'ultralight', 'light', 'normal', 'demibold', 'bold'*, 'extra bold'}<br />
-<b>titlecolo</b>: [str] title font colour ('k'* or named colour or '#xxxxxx' value)</p>
+%s
+<b>titlecolo</b>: [str] title font colour: [k*|r|g|b|c|m|y] or "#RRGGBBAA" or colour name</p>
 <hr />
 <h3><font color="#006">Ticks and label:</font></h3>
 <p><b>tickstep</b>: [int] show label every `ticksteps` ticks (4)<br />
@@ -110,23 +137,19 @@ cbar_usage = '''<h1>Usage</h1>
  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -5: to set 3 (min, half, max) or 5 ticks (min, 1/4, 1/2, 3/4, max)<br />
  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; depending on number of colours<br />
 <b>decimal</b>: [int] decimal places for tick labels (3)<br />
-<b>tickfontsize</b>: [str|int] tick label font size (16) or one of the above<br />
-<b>tickcolo</b>: [str] title font colour ('#666666'* or named colour or '#xxxxxx' value)<br />
+%s
+<b>tickcolo</b>: [str] ticks/labels font colour: [k*|r|g|b|c|m|y] or "#RRGGBBAA" or colour name<br />
 <b>ticklength</b>: [float] tick length (8)</p>
-<h3><font color="#006">Ticks and labels position:</font></h3>
-<p><b>top</b>: [bool] show thicks/label on top of horizontal colour bar (False)<br />
-<b>bottom</b>: [bool] show thicks/label at bottom of horizontal colour bar (True)<br />
-<b>left</b>: [bool] show thicks/label on left of vertical colour bar (True)<br />
-<b>right</b>: [bool] show thicks/label on right of vertical colour bar (False)</p>
+%s
 <hr />
 <h3><font color="#006">Tweaking:</font></h3>
 <p><b>tweak_end_replace</b>: [bool] replace last tick with end value (True)<br />
 <b>tweak_end_add</b>: [bool] add end value to ticks array (False)</p>
 <h3><font color="#006">Debug parameter:</font></h3>
-<p><b>verbose</b>: [bool] (False) print information about the QML and ticks</p>
+<p><b>verbose</b>: [bool] (False) print information about the colours and ticks</p>
 <p>&nbsp;</p>
 <p>*: default value</p>
-'''
+''' % (__str1, __str2, __str3, __str4, __str5, __str6)
 # =========================================================================================
 
 
@@ -523,6 +546,10 @@ class readQML():
 # =========================================================================================
 
 
+# colour ramp type: 0-Discrete, 1-Interpolated, 2-Exact, 3-Paletted
+# classification mode: 0:N/A , 1-Continuous, 2-Equal interval, 3-Quantile
+# If colourbar is badly formed, then check that all values are *unique*
+
 class drawCBar():
     '''Draw and save a colour bar.
 
@@ -708,9 +735,11 @@ class drawCBar():
     def __normalisation(self, bounds, N):
         '''No normalisation.'''
         #
+        # colour ramp type: 0-Discrete, 1-Linear (interpolated), 2-Exact, 3-Paletted
+        # classification mode: 0:N/A , 1-Continuous, 2-Equal interval, 3-Quantile
         cho = self.qml.cm * 10 + self.qml.nMode
         if cho in [11, 21, 31]:
-            self.drawedges = False
+            self.drawedges = False  # always False
         elif cho in [3, 10, 12, 20, 22, 30, 32]:
             self.spacing = 'uniform'
         else:
