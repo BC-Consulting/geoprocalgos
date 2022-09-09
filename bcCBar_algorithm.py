@@ -99,7 +99,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                     "SUCCESS":"Colour bar is created as: ",
                    }
     _pstr = {'THE_LAYER': 'Input one-band raster',
-             'ORI': 'colour bar orientation',
+             'ORI': 'Colour bar orientation',
              'TITLE': 'Title',
              'DECI': 'Number of decimals to display',
              'CLENGTH': 'Colour bar length',
@@ -158,7 +158,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
                                {'list':self._tick_lst,'defaultValue':2},True],
            self.TICKFONTSIZE: [45,self._pstr['TICKFONTSIZE'],'NumberD',
                                {'defaultValue':14.,'minValue':1.,'maxValue':128.},True],
-           self.TICKCOLO:     [46,self._pstr['TICKCOLO'],'String',{'defaultValue':'k'},True],
+           self.TICKCOLO:     [46,self._pstr['TICKCOLO'],'String',{'defaultValue':'#666666'},True],
            self.TICKLENGTH:   [50,self._pstr['TICKLENGTH'],'NumberD',
                                {'defaultValue':8.,'minValue':0.,'maxValue':32.},True],
            self.TWK_REPLACE:  [110, self._pstr['TWK_REPLACE'],'Bool',{'defaultValue':True},False],
@@ -228,19 +228,19 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
         kw['inverted'] = self.parameterAsBool(parameters, self.BREVERSED, context)
         kw['orientation'] = self._ori_lst[self.parameterAsInt(parameters, self.ORI, context)].lower()
         kw['title'] = self.parameterAsString(parameters, self.TITLE, context).replace('\\n', '\n')
-        kw['titlefontname'] = self.parameterAsString(parameters, self.TITLE_FONT, context)
+        kw['titlefontname'] = self._fontfamily[self.parameterAsInt(parameters, self.TITLE_FONT, context)]
         kw['titlefontsize'] = self.parameterAsDouble(parameters, self.FONT_SIZE, context)
-        kw['titlefontweight'] = self.parameterAsString(parameters, self.TITLE_WEIGHT, context)
+        kw['titlefontweight'] = self._fweight[self.parameterAsInt(parameters, self.TITLE_WEIGHT, context)]
         kw['titlecolo'] = self.parameterAsString(parameters, self.TITLE_COLOR, context)
         kw['tickfontsize'] = self.parameterAsDouble(parameters, self.TICKFONTSIZE, context)
         kw['tickcolo'] = self.parameterAsString(parameters, self.TICKCOLO, context)
-        kw['tickstep'] = self.parameterAsDouble(parameters, self.TICKSEP, context)
+        kw['tickstep'] = self.parameterAsInt(parameters, self.TICKSEP, context)
         kw['decimal'] = self.parameterAsInt(parameters, self.DECI, context)
         kw['ticklength'] = self.parameterAsDouble(parameters, self.TICKLENGTH, context)
-        kw['bottom'] = True if labbl == 0 else False
-        kw['left'] = True if labbl == 0 else False
-        kw['top'] = True if labtr == 1 else False
-        kw['right'] = True if labtr == 1 else False
+        kw['bottom'] = True if labbl == 0 or labtr == 0 else False
+        kw['left'] = True if labbl == 0 or labtr == 0 else False
+        kw['top'] = True if labbl == 1 or labtr == 1 else False
+        kw['right'] = True if labbl == 1 or labtr == 1 else False
         kw['tweak_end_replace'] = self.parameterAsBool(parameters, self.TWK_REPLACE, context)
         kw['tweak_end_add'] = self.parameterAsBool(parameters, self.TWK_ADD, context)
         kw['verbose'] = verbose

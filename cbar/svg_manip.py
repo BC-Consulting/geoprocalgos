@@ -18,9 +18,47 @@
  *                                                                         *
  ***************************************************************************/
 
- Manipulate SVG created by bcColorBar (matplotlib svg) to remove extra spaces
+ Manipulate SVG created by bcColorBar (matplotlib svg) to remove extra spaces 
  around the colour bar.
-==============================================================================
+==========================================================================================
+
+figure_1
+ - axex_3                   if exists, delete
+ - axes_2                   dummy axes: out, if no axes_3, oherwise this is alternate tick
+ + axes_1
+ 
+     text_n+1 ... text_m:   title    (m > n+1)
+     text_n:                units
+ 
+     patch_n:               top axes frame
+     patch_n-1:             bottom axes frame
+     patch_n-2:             right axes frame
+     patch_n-3:             left axes frame
+
+     matplotlib.axis_2:     y-axis  (empty for horizontal cb)
+     matplotlib.axis_1:     x-axis  (empty for vertical cb)
+
+     patch_3 ... patch_n-4: colour boxes
+     patch_2:               axes frame
+
+ + patch_1:                 figure frame -> out
+
+
+What to do:
+    - remove patch_1
+    - remove axes_3 and possibly axes_2
+    - unwrap axes_1 and possible axes_2
+    - resize svg
+
+path commands are:
+    Absolute coords (uppercase)  -  Relatice coords (lowercase: m, l, h, v, q)
+    M  : Move to (start point)        X, Y
+    L  : Line to (draw to)            X, Y
+    z  : Close path (draw to start)   -
+    H  : Horizontal line to           X        - not used by matplotlib
+    V  : Vertical line to             Y        - not used by matplotlib
+    Q  : Bézier curve                 iX, iY, eX, eY   i: inflection point,  e end point
+    zM : Close path and move to       X, Y
 
 WARNING: code formatting does not follow pycodestyle recommendations
 """
@@ -32,6 +70,7 @@ try:
     from .utils import get_dom, get_svg_header, bc_prettify_txt
 except:
     from utils import get_dom, get_svg_header, bc_prettify_txt
+in_debug_mode = False
 # =========================================================================================
 
 
@@ -114,6 +153,7 @@ class bc_svg():
             Return 2 tuples and a float: translate [x,y], scale[x,y] & rotate
         '''
         #
+        # 'translate(101.035828 65.49559)rotate(-90)scale(0.05 -0.05)'
         ar = L.split(')')
         xytr = [0., 0.]
         xysc = [1., 1.]
@@ -228,6 +268,9 @@ class bc_svg():
     def __getdefs(self):
         '''Extract all defs from the dom.'''
         #
+        # Three kinds of defs in the vsg: style, path and clip
+        # For clip massage them to get id first
+        # Finally sort all those defs
         defs = self.the_svg.find_all('defs')
         def_ar = []
         all_defs = get_svg_header()
@@ -270,6 +313,7 @@ class bc_svg():
             if pth.parent.name == 'g':
                 dar = self._parse_path(pth)
                 if len(dar) > 0:
+                    # build the drawing commands array
                     allds += dar
         self.__err = ''
         for e in allds:
@@ -297,16 +341,37 @@ class bc_svg():
         #
         dom_defs = self.__getdefs()
         #
+        # Remove all defs, we got them already
         gs = self.the_svg.find_all('defs')
         for g in gs:
             g.decompose()
         #
         # Find dimensions of the colour bar (only, no text) => paths define rectangles
         xmax, xmin, ymax, ymin = self.__getcbardim()
+        if in_debug_mode:
+            print('xmin, xmax, ymin, ymax', xmin, xmax, ymin, ymax, ':::', xmax-xmin, ymax-ymin)
         #
         # Find plot dimensions. Compute max/min of texts bounding box
         texts = self.the_svg.find_all('g', {'id': re.compile(r"text_\d*")})
         for text in texts:
+            #<g id="text_35">
+            # <!-- $\mathcal{A}\mathrm{sin}(2 \omega t)$ -->
+            # <g style="..." transform="translate(101.035828 65.49559)scale(0.05 -0.05)">
+            #  <use transform="translate(0 0.015625)" xlink:href="..."></use>
+            #  <use transform="translate(85.199982 0.015625)" xlink:href=""></use>
+            # </g>
+            #</g>
+            #
+            # or
+            #
+            #<g id="text_34">
+            # <!-- Colour bar for -->
+            # <g style="..." transform="translate(89.833015 51.487621)scale(0.06 -0.06)">
+            #  <use xlink:href="..."></use>
+            #  <use x="73.388672" xlink:href="..."></use>
+            #  <use x="142.089844" xlink:href="..."></use>
+            # </g>
+            #</g>
             ggss = text.find_all('g')
             for gg in ggss:
                 trans = gg['transform']
@@ -319,6 +384,9 @@ class bc_svg():
                     ix = 0
                     iy = 1
                 uses = gg.find_all('use')                          # all characters in this text
+                x0 = 0.
+                maxx = 0.
+                dx = -9e9
                 for use in uses:
                     if use.has_attr('transform'):                  # this character transform
                         trsc = use['transform']                    #    (translate only)
@@ -326,36 +394,41 @@ class bc_svg():
                     else:
                         tr = [0., 0.]
                     if use.has_attr('x'):                          # or this character x-offset
-                        x0 = float(use['x'])
+                        x = float(use['x'])
                     else:
-                        x0 = 0.
-                    #
-                    x = xytr[0] + (tr[0] + x0) * xysc[0]           # x position of this character
-                    y = xytr[1] + tr[1] * xysc[1]                  # y position of this character
-                    if ivrot == 90:
-                        x, y = y, x
-                    letter = use['xlink:href'][1:]                 # this character
-                    dle = dom_defs.find('path', {'id': letter})    # find its definition path
-                    #
-                    if dle.has_attr('d'):
-                        pth = self._parse_path(dle)
-                        scl = self._get_trSc(dle['transform'])[1]  # transform="scale(0.015625)
-                        for p in pth:                              # for each command in path def
-                            if len(p) > 0 and p[0] in 'MLQ':       #  ['M', x0, y0, x1, y1, ...]
-                                for i, sxy in enumerate(p[1:]):
-                                    xy = float(sxy)
-                                    if (((i % 2) == 0) and ivrot == 0) or (((i % 2) == 1) and ivrot == 90):
-                                        # X-ccord
-                                        xy = xy * scl[0] * xysc[ix] + x
-                                        xmin = xy if xmin > xy else xmin
-                                        xmax = xy if xmax < xy else xmax
-                                    else:
-                                        # Y-coord
-                                        xy = xy * scl[0] * xysc[iy] + y
-                                        ymin = xy if ymin > xy else ymin
-                                        ymax = xy if ymax < xy else ymax
+                        x = 0.
+                    dx = (x - x0) if (x - x0) > dx else dx         # max character width (x)
+                    maxx = x                                       # position of this character
+                    x0 = x
+                maxx += dx                                         # max x-distance
+                if ivrot == 90:
+                    Dx = 1.2 * dx * abs(xysc[1])
+                    xmi = xytr[0] + tr[0] - Dx
+                    xma = xytr[0] + tr[0] + Dx
+                    yma = xytr[1] + tr[1]
+                    ymi = yma - maxx * xysc[0]
+                    if in_debug_mode:
+                        print('rot=90, Dx, Dy:', Dx, maxx * xysc[0])
+                else:
+                    Dy = 1.2 * dx * abs(xysc[1])
+                    xmi = xytr[0] + tr[0]
+                    xma = xmi + maxx * xysc[0]
+                    ymi = xytr[1] + tr[1] - Dy
+                    yma = xytr[1] + tr[1] + Dy
+                    if in_debug_mode:
+                        print('rot=0, Dx, Dy:', maxx * xysc[0], Dy)
+                if in_debug_mode:
+                    print('scx, scy, w, dx:', xysc[0], abs(xysc[1]), maxx, dx)
+                    print('TRx, TRy, trx, try', xytr[0], xytr[1], tr[0], tr[1])
+                    print('xmi, xma, ymi, yma', xmi, xma, ymi, yma)
+                xmin = min(xmi, xmin)
+                xmax = max(xma, xmax)
+                ymin = min(ymi, ymin)
+                ymax = max(yma, ymax)
         # bounds
         self.w1, self.h1 = xmax - xmin, ymax - ymin
+        if in_debug_mode:
+            print('xmin, xmax, ymin, ymax', xmin, xmax, ymin, ymax, ':::', xmax-xmin, ymax-ymin)
         #
         # New svg dimensions and viewbox
         self.vb1 = '%0.6f %0.6f %0.6f %0.6f' % (0., 0., xmax-xmin, ymax-ymin)
@@ -379,8 +452,12 @@ class bc_svg():
         final = final.replace('BCV', self.vb1)
         final = final.replace('BCTITRE', titre)
         final = final.replace('BCDATE', str(datetime.date.today()))
+        if in_debug_mode:
+            svgfile = os.path.splitext(self.the_svg_file)[0] + '___testing.svg'
+        else:
+            svgfile = self.the_svg_file
         try:
-            with codecs.open(self.the_svg_file, 'w', 'utf-8') as fo:
+            with codecs.open(svgfile, 'w', 'utf-8') as fo:
                 fo.write(final)
                 fo.write('  <defs>\n')
                 for d in self.def_ar:
@@ -397,3 +474,16 @@ class bc_svg():
             return False
         #
         return True
+
+
+# if __name__ == '__main__':
+#     in_debug_mode = True
+#     filesvg = r'D:\ud\difference_20936.svg'
+#     mysvg = bc_svg(filesvg, 'This is a test')
+#     if mysvg.is_init():
+#         err = mysvg.auto_process()
+#         print(err)
+#         print(mysvg.trans, mysvg.vb1)
+#     else:
+#         print('Cannot init parser')
+#         

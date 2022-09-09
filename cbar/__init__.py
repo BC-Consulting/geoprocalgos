@@ -28,6 +28,7 @@ WARNING: code formatting does not follow pycodestyle recommendations
 """
 
 import os
+# import shutil
 
 #   Test for dependencies -------------------------------------
 try:
@@ -95,22 +96,7 @@ if not is_QGIS_available:
 <b>left</b>: [bool] show thicks/label on left of vertical colour bar (True)<br />
 <b>right</b>: [bool] show thicks/label on right of vertical colour bar (False)</p>
 """
-else:
-    __str1 = 'raster layer'
-    __str2 = ''
-    __str3 = 'raster layer source'
-    __str4 = """<b>titlefontname</b>: [str] title and labels font family: one of {serif, sans-serif*, cursive, fantasy, monospace}<br />
-<b>titlefontsize</b>: [int] title font size (28*)<br />
-<b>titlefontweight</b>: [str] title font weight: one of {ultralight, light, normal, demibold, bold*, extra bold}<br />
-"""
-    __str5 = "<b>tickfontsize</b>: [int] tick label font size (16)<br />"
-    __str6 = """<h3><font color="#006">Location of ticks and labels</font></h3>
-<p><b>Label_on</b>: where to place ticks and labels.<br />
- &nbsp; &nbsp; &nbsp; &nbsp; Left, Right or None for vertical colour bar. (left)<br />
- &nbsp; &nbsp; &nbsp; &nbsp; Bottom, Top or None for horizontal colour bar. (bottom)<br />
-<b>Additional location of ticks and labels</b>: Ticks and labels can be duplicated on the other side of the colour bar. (None)</p>
-"""
-cbar_usage = '''<h1>Usage</h1>
+    cbar_usage = '''<h1>Usage</h1>
 <p><b>qml_file</b>: [str] full name of the %s to draw colour bar from.%s</p>
 <hr />
 <h2><font color="#600">Optional parameters:-</font></h2>
@@ -150,6 +136,57 @@ cbar_usage = '''<h1>Usage</h1>
 <p>&nbsp;</p>
 <p>*: default value</p>
 ''' % (__str1, __str2, __str3, __str4, __str5, __str6)
+else:
+    cbar_usage = """
+<i>Generate a colour scalebar (cbar) from a one-band raster for use in Composer</i>
+<b><font color="#f00">Only works for the "Singleband pseudocolour" renderer</font></b>
+Paramaters needed to draw the scalebar are:
+<b>Required</b>
+* <b>Input</b>: currently selected raster in QGIS legend. A qml file will automatically be created.<br/>
+
+<b>Optional</b>
+* <b>Colour bar orientation</b>: orientation of the cbar: either 'Vertical' or 'Horizontal'*.
+* <b>Colour bar length</b>: [float] length of the cbar in cm (10*).
+* <b>Colour bar breadth</b>: [float] width of the cbar in cm (0.75*).
+* <b>Draw edge around each colour?</b> True/False*.
+* <b>Reverse colour bar?</b> True/False*.<br/> &nbsp; &nbsp; &nbsp; Default is minimum at bottom/left, maximum at top/right.
+* <b>Title</b> of the cbar [str]. Use '\\n' as multilines marker.
+* <b>Title Colour</b>: [str] one of: [k*|r|g|b|c|m|y] or "#RRGGBBAA" or colour name.
+* <b>Font family for title and labels</b>: [str] one of:<br/> &nbsp; &nbsp; &nbsp; {serif, sans-serif*, cursive, fantasy, monospace}.
+* <b>Title font size</b>: [float] (28*).
+* <b>Title font weight</b>: [str] one of:<br/> &nbsp; &nbsp; &nbsp; {ultralight, light, normal, demibold, bold*, extra bold}.
+* <b>Number of decimals to display</b> in tick labels [int] (2*)
+* <b>Tick separation</b>: every 'ticksep' is shown [int] (-5*)<br/> &nbsp; &nbsp; &nbsp; can be:
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -1: to set tickstep to 1 or 4 depending on colourbar length
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -3: to set 3 (min, half, max) ticks
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -5: to set 3 (min, half, max) or 5 ticks (min, 1/4, 1/2, 3/4, max)
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; depending on number of colours
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; int > 0 to set tickstep to custom spacing.
+* <b>Location of ticks ans labels</b> [str] one of:
+ &nbsp; &nbsp; &nbsp; <i>bottom/left</i>: below cbar if orientation is horizontal,<br/> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; left of cbar if orientation is vertical;
+ &nbsp; &nbsp; &nbsp; <i>top/right</i>: above cbar if orientation is horizontal,<br/> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; right of cbar if orientation is vertical;
+ &nbsp; &nbsp; &nbsp; <i>none</i>: do not show ticks and labels.
+ * <b>Additional location of ticks and labels</b>: [str] Add opposite ticks and labels (none*). One of:
+ &nbsp; &nbsp; &nbsp; <i>bottom/left</i>: below cbar if orientation is horizontal,<br/> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; left of cbar if orientation is vertical;
+ &nbsp; &nbsp; &nbsp; <i>top/right</i>: above cbar if orientation is horizontal,<br/> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; right of cbar if orientation is vertical;
+ &nbsp; &nbsp; &nbsp; <i>none</i>: do not show ticks and labels.
+* <b>Tick labels font size</b>: [float] labels size (14*).
+* <b>Ticks/labels colour</b>: [str] one of: [k|r|g|b|c|m|y] or "#RRGGBBAA" or colour name. Default: #666666
+* <b>Ticks length</b>: [float] length of the ticks in pixels.
+<b>Advances parameters (tweaking)</b>
+* <b>Replace last tick with end value?</b>: if end tick label collides with tick label before it set it True*. Otherwise False.
+* <b>Add end value to ticks array?</b>: if last tick label is not the end value set it True. Otherwise False*.
+* <b>Print information about colour and ticks?</b>: False*. Set it True for debug purposes only.<br/>
+
+* <b>Output SVG file</b>: the name of the svg (and png) file(s) representing the generated colour scalebar. If left blank temporary SVG/PNG files are created in /temp/ folder.
+---
+(*): default<br/><br/>
+
+-------------------------------------------------------------------
+One-band-rasters saved with QGIS V3.x are the only ones accepted.<br/>Support for "Singleband pseudocolour" renderer only, no other renderer supported.<br/>Colour interpolation can be: LINEAR, EXACT, DISCRETE or PALETTED.<br/>Colour mode can be: Continuous, Equal Interval or Quantile.
+Title and sub-title accept text formatted in Maptplotlib mathtext.
+-------------------------------------------------------------------
+"""
 # =========================================================================================
 
 
@@ -184,6 +221,7 @@ class errorObject():
                    "E_NOCOL": "ERROR: Not enough colours. Minimum 2!",
                    "E_BADIFIL": "ERROR: Wrong input file!",
                    "E_NOSTYLE": "ERROR: This raster is not properly styled!",
+                   "E_NOPSEUDOCOL": "ERROR: Render type is not 'Singleband pseudocolour'",
                   }
 
     def __init__(self):
@@ -221,6 +259,8 @@ class BCgetSymbology():
         #
         if rlayer.rasterType() > 1 or rlayer.bandCount() > 1:
             self.errO.err = self.errO.the_strings["E_NOONEBAND"]
+        if rlayer.renderer().type() != 'singlebandpseudocolor':
+            self.errO.err = self.errO.the_strings["E_NOPSEUDOCOL"]
     # --------------------------------------
 
     def _format_label(self, t):
@@ -272,12 +312,12 @@ class BCgetSymbology():
             self.arL[i] = self._format_label(v)
         if self.arL[0] == self.arL[1]:
             if float(self._rmin) < float(self.arL[0]):
-                self.arL[0] = self._rmin
+                self.arL[0] = float(self._rmin)
             else:
                 self.arL[0] = self._format_label(float(self.arL[0]) - (float(self.arL[2]) - float(self.arL[1])) / 2.)
         if self.arL[-1] == self.arL[-2]:
             if float(self._rmax) > float(self.arL[-1]):
-                self.arL[-1] = self._rmax
+                self.arL[-1] = float(self._rmax)
             else:
                 self.arL[-1] = self._format_label(float(self.arL[-1]) + (float(self.arL[-2]) - float(self.arL[-3])) / 2.)
         #
@@ -646,53 +686,53 @@ class drawCBar():
         # Colour bar visual parameters
         #
         # Colour bar orientation and size
-        self.ori = 'horizontal' if 'orientation' not in kw else kw['orientation']
-        if self.ori == 'h':
-            self.ori = 'horizontal'
-        elif self.ori == 'v':
+        self.ori = 'horizontal' if 'orientation' not in kw else str(kw['orientation']).lower()
+        if self.ori == 'v':
             self.ori = 'vertical'
+        if self.ori != 'vertical':
+            self.ori = 'horizontal'
         # Colour boxes lengths
-        self.spacing = 'uniform' if 'spacing' not in kw else kw['spacing']
-        if self.spacing == 'u':
-            self.spacing = 'uniform'
-        elif self.spacing == 'p':
+        self.spacing = 'uniform' if 'spacing' not in kw else str(kw['spacing']).lower()
+        if self.spacing == 'p':
             self.spacing = 'proportional'
+        if self.spacing != 'proportional':
+            self.spacing = 'uniform'
         # Colour bar dimensions
-        self.width = 15 if 'width' not in kw else kw['width']
-        self.height = 0.75 if 'height' not in kw else kw['height']
+        self.width = 15. if 'width' not in kw else float(kw['width'])
+        self.height = 0.75 if 'height' not in kw else float(kw['height'])
         # Draw box around each colour
-        self.drawedges = False if 'drawedges' not in kw else kw['drawedges']
+        self.drawedges = False if 'drawedges' not in kw else bool(kw['drawedges'])
         # Invert colour bar
-        self.inverted = False if 'inverted' not in kw else kw['inverted']
+        self.inverted = False if 'inverted' not in kw else bool(kw['inverted'])
 
         #Title
-        self.label = '' if 'title' not in kw else kw['title']
-        self.family = 'sans-serif' if 'titlefontname' not in kw else kw['titlefontname']
-        self.titlefontsize = 28 if 'titlefontsize' not in kw else kw['titlefontsize']
-        self.titlefontweight = 'bold' if 'titlefontweight' not in kw else kw['titlefontweight']
-        self.titlecolo = 'k' if 'titlecolo' not in kw else kw['titlecolo']
+        self.label = '' if 'title' not in kw else str(kw['title'])
+        self.family = 'sans-serif' if 'titlefontname' not in kw else str(kw['titlefontname'])
+        self.titlefontsize = 28. if 'titlefontsize' not in kw else float(kw['titlefontsize'])
+        self.titlefontweight = 'bold' if 'titlefontweight' not in kw else str(kw['titlefontweight'])
+        self.titlecolo = 'k' if 'titlecolo' not in kw else str(kw['titlecolo'])
 
         # Ticks to label
-        nstep = -5 if 'tickstep' not in kw else kw['tickstep']
+        nstep = -5 if 'tickstep' not in kw else int(kw['tickstep'])
         if nstep < 0 and nstep not in [-1, -3, -5]:
             nstep = -5
         self.nstep = 1 if nstep == 0 else nstep
         # Decimal places for tick labels
-        self.deci = 3 if 'decimal' not in kw else kw['decimal']
+        self.deci = 2 if 'decimal' not in kw else int(kw['decimal'])
         # Font
-        self.tickfontsize = 16 if 'tickfontsize' not in kw else kw['tickfontsize']
-        self.tickcolo = '#666666' if 'tickcolo' not in kw else kw['tickcolo']
-        self.tz = 8 if 'ticklength' not in kw else kw['ticklength']
+        self.tickfontsize = 14. if 'tickfontsize' not in kw else float(kw['tickfontsize'])
+        self.tickcolo = '#666666' if 'tickcolo' not in kw else str(kw['tickcolo'])
+        self.tz = 8. if 'ticklength' not in kw else float(kw['ticklength'])
 
         # Ticks position
-        self.btop = False if 'top' not in kw else kw['top']
-        self.bbottom = True if 'bottom' not in kw else kw['bottom']
-        self.bleft = True if 'left' not in kw else kw['left']
-        self.bright = False if 'right' not in kw else kw['right']
+        self.btop = False if 'top' not in kw else bool(kw['top'])
+        self.bbottom = True if 'bottom' not in kw else bool(kw['bottom'])
+        self.bleft = True if 'left' not in kw else bool(kw['left'])
+        self.bright = False if 'right' not in kw else bool(kw['right'])
         #
         # Tweaking
-        self.tweak_end_replace = True if 'tweak_end_replace' not in kw else kw['tweak_end_replace']
-        self.tweak_end_add = False if 'tweak_end_add' not in kw else kw['tweak_end_add']
+        self.tweak_end_replace = True if 'tweak_end_replace' not in kw else bool(kw['tweak_end_replace'])
+        self.tweak_end_add = False if 'tweak_end_add' not in kw else bool(kw['tweak_end_add'])
     # ----------------------------------------------------------------------------------------
 
     def close(self):
@@ -802,7 +842,7 @@ class drawCBar():
         if self.ori[0] == 'v' and self.width > self.height:
             self.width, self.height = self.height-.25, self.width
         #
-        fig, ax = plt.subplots(figsize=(self.width, self.height))
+        fig, ax = plt.subplots(figsize=(self.width, self.height), constrained_layout=True)
         if self.height >= 0.75 and self.ori[0] == 'h':
             fig.subplots_adjust(bottom=0.5)
         #
@@ -834,7 +874,7 @@ class drawCBar():
                 fraction=1)
         #
         # Set Title
-        scb.set_label('\n'+self.label, fontfamily=self.family, fontsize=self.titlefontsize, fontweight=self.titlefontweight, color=self.titlecolo)
+        scb.set_label(self.label, fontfamily=self.family, fontsize=self.titlefontsize, fontweight=self.titlefontweight, color=self.titlecolo, linespacing=1.4)
         #
         # Set ticks and labels
         fmt = '%0.' + str(self.deci) + 'f'
@@ -879,17 +919,22 @@ class drawCBar():
     def __save2SVG(self):
         ''' Save matplotlib figure (fig) to svg file (svgf).'''
         #
-        self.fig.savefig(self.the_svg, transparent=True, dpi=300)
-        try:
-            self.fig.savefig(os.path.splitext(self.the_svg)[0]+'.png', transparent=True, dpi=300)
-        except:
-            pass
+        self.fig.savefig(self.the_svg, transparent=True, dpi=300)   # , pad_inches='tight')
+        # shutil.copyfile(self.the_svg, os.path.splitext(self.the_svg)[0]+'_ori.svg')
+#        try:
+#            self.fig.savefig(os.path.splitext(self.the_svg)[0]+'.png', transparent=True, dpi=300)
+#        except:
+#            pass
         #
         titre = os.path.splitext(os.path.split(self.the_svg)[1])[0]
         titre += ' - Ramp type: %s, Classification mode: %s, Number colours: %d' % (
                   self.qml.colmod[self.qml.nMode], self.qml.clamod[self.qml.cm], self.qml.nC)
         # Resize svg file to colourbar content
-        my_svg = bc_svg(self.the_svg, titre)
+        ar = self.label.split('\n')
+        L = 0
+        for e in ar:
+            L = max(len(e), L)
+        my_svg = bc_svg(self.the_svg, titre, [self.titlefontsize*L, self.titlefontsize*len(ar)])
         if my_svg.is_init():
             if not my_svg.auto_process():
                 return my_svg.get_error()

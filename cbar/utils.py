@@ -59,7 +59,7 @@ def get_dom(the_file, btxt=False):
     buff = buff.replace(' ]', ']')
     buff = buff.replace('[ ', '[')
     try:
-        dom = BeautifulSoup(buff, 'lxml')
+        dom = BeautifulSoup(buff, "lxml")
     except:
         raise
     #
@@ -74,6 +74,7 @@ def bc_prettify_txt(sto):
         return: a formatted string representing the same svg document
     '''
     #
+    # de-prettify
     st = sto.replace('\r', '')
     st = st.replace('\n', '')
     st = st.replace('>', '>\n')
@@ -88,9 +89,11 @@ def bc_prettify_txt(sto):
             break
         L = len(st)
     #
+    # prettify
     st = st.replace('>\n</path>', '/>')
     st = st.replace('>\n</use>', '/>')
     #
+    #   indent
     ar = st.split('\n')
     sp = '    '
     st = ''
@@ -106,12 +109,13 @@ def bc_prettify_txt(sto):
         else:
             st += ast + '\n'
     #
+    # Try to overcome the svg-matplotlib problem...
     arst = st.split('\n')
     for i, a in enumerate(arst):
         if (('<path' in a) and ('fill:none' not in a) and ('stroke:' not in a) and
            ('fill:' in a)):
-            i1 = a.find('style') + 7
-            i2 = a.find('"', i1)
+            i1 = a.find('style') + 7  # position of 1st character after: style="
+            i2 = a.find('"', i1)      # position of 1st " after style="
             stroke = ''
             arstyle = a[i1:i2].split(';')
             for ass in arstyle:
@@ -122,7 +126,7 @@ def bc_prettify_txt(sto):
                 arstyle[-1] = stroke
             else:
                 arstyle.append(stroke)
-            arst[i] = a[:i1] + ';'.join(arstyle) + a[i2:]
+            arst[i] = a[:i1] + ';'.join(arstyle) + a[i2:]  # reconstruct string
     #
     return '\n'.join(arst)
 # -----------------------------------------------------------------------------------------

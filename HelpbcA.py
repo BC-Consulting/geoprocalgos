@@ -21,50 +21,6 @@ Created on Mon Jun 3 2019
 WARNING: code formatting does not follow pycodestyle recommendations
 """
 
-### help_bcCBar
-help_bcCBar = """
-<i>Generate a colour scalebar from a one-band raster for use in Composer</i>
-Paramaters needed to draw the scalebar are:
-<b>Required</b>
-* <b>Input</b>: currently selected raster in QGIS legend. A qml file will automatically be created.<br/>
-
-<b>Optional</b>
-* <b>Scalebar orientation</b>: "vertical"* or "horizontal"
-* <b>Number of decimals</b> to display in tick labels (default: 2)
-* <b>Title</b> of the colour scalebar. Use ÿ (ASCII 255) as multilines marker.
-* <b>Sub-title</b> of the colour scalebar (single line). Generally units of the raster.
-* <b>Ratio</b> width of the colour scalebar relative to full length (0.1)
-* <b>Tick separation</b>: every 'ticksep' is shown (default: 1 [>= 1])
-* <b>Offset</b> to arrive at nice numbers for ticks labelling (default: 0. [-100., 100.])
-* <b>Alternate ticks on both axis?</b> False*. If True, sets 'Label both sides' to False.
-* <b>Label both sides</b> of the colour scalebar or not. False*, or
-* <b>Which side to label</b>: 'none', 'both', 'top', 'bottom'*, 'right'*, 'left'.
-* <b>Ticks label font size</b> relative to plot area. Default 4, [.2, 10.]
-* <b>Title font size</b> relative to ticks label font size (+2)* [-10.,10.]
-* <b>Sub-title font size</b> relative to ticks label font size (+1)*
-* <b>Colour scalebar frame line width</b> (default 1.0 [0.0, 5.0])
-* <b>Colour dividers line width</b>, between colours (default 0.0 [0., 2.5])
-* <b>Title colour</b> ('black'*)
-* <b>Sub-title colour</b> ('black'*)
-* <b>Frame colour</b> ('black'*)
-* <b>Divider colour</b> ('black'*)
-* <b>The scalebar can be reversed</b>. False*
-* <b>A png</b> file can be created in addition to the svg file. False*
-* <b>Additional parameters</b> can be defined. See <a href="https://www.geoproc.com/be/bccbar3.htm#EP">home page</a> for more details.<br/>
-
-* <b>Ouptut</b>: the name of the svg (and png) file(s) representing the generated colour scalebar. A html file is also created that shows the colour scalebar(s) and options used. Click the link in "Result Viewer" to display it in your browser.
----
-(*): default<br/><br/>
-
--------------------------------------------------------------------
-One-band-rasters saved with QGIS V3.x are the only ones accepted.
-Colour interpolation can be: LINEAR, EXACT, DISCRETE or PALETTED.
-Colour mode can be: Continuous, Equal Interval or Quantile.<br/>
-
-Title and sub-title accept text formatted in Maptplotlib mathtext.
--------------------------------------------------------------------
-"""
-
 ### help_bcSaveqml
 help_bcSaveqml = """
 Save the style of each selected layer in .qml files.

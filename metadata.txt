@@ -3,9 +3,9 @@
 # Mandatory items:
 [general]
 name=geoprocAlgos
-qgisMinimumVersion=3.0
+qgisMinimumVersion=3.24
 description=Collection of Processing algorithms from GeoProc.com
-version=3.20
+version=3.24
 author=GeoProc.com
 email=info@geoproc.com
 about=A collection of Processing-based algorithms to facilitate various QGIS tasks.
@@ -14,7 +14,11 @@ repository=https://github.com/BC-Consulting/geoprocalgos
 # End of mandatory metadata
 
 # Recommended items:
-changelog=V3.20: New colourbar algorithm with different options.
+changelog=V3.24: fix bugs in CBar: type-conv for each entry, svg resizing, no png out.
+    V3.23: fix bugs in CBar.
+    V3.22: Remove unavailable modules.
+    V3.21: Polishing colourbar.
+    V3.20: New colourbar algorithm with different options.
     V3.15: Fix missing module.
     V3.14 Fix problem with svg creation.
     V3.13: Fix bug in CBar3 crashing when custom parameters as dictionary had comma in their values.
