@@ -201,6 +201,34 @@ def isfloat(value):
 # =========================================================================================
 
 
+def tofloat(value):
+    '''Convert string value to float if possible.
+       Returns numpy.nan otherwise.
+    '''
+    #
+    if isfloat(value):
+        return float(value)
+    v = value.replace(' ', '')
+    if isfloat(v):
+        return float(v)
+    ic = v.find(',')
+    ip = v.find('.')
+    if ip > ic:
+        # 1,234,567.99
+        v = v.replace(',', '')
+        if isfloat(v):
+            return float(v)
+    elif ip < ic:
+        # 1.234.567,99
+        v = v.replace('.', '')
+        v = v.replace(',', '.')
+        if isfloat(v):
+            return float(v)
+    # else: ip = ic = -1
+    return np.nan
+# =========================================================================================
+
+
 class myFeedBack():
     '''Give user fedback.'''
 
@@ -237,6 +265,7 @@ class BCgetSymbology():
                 2: 'Multiband'}
     colmod = {0: 'Discrete', 1: 'Interpolated (Linear)', 2: 'Exact', 3: 'Paletted'}
     clamod = {0: 'N/A - paletted', 1: 'Continuous', 2: 'Equal interval', 3: 'Quantile'}
+    iwarning = 0
 
     def __init__(self, rlayer, verbose=False):
         '''Init class.
@@ -268,9 +297,9 @@ class BCgetSymbology():
         #
         fmt = '%.' + str(self.deci) + 'f'
         try:
-            t = fmt % float(t)
+            t = fmt % tofloat(t)
         except:
-            pass
+            self.iwarning += 1
         return t
     # --------------------------------------
 
@@ -311,12 +340,12 @@ class BCgetSymbology():
                 v = v.split(' - ')[0]
             self.arL[i] = self._format_label(v)
         if self.arL[0] == self.arL[1]:
-            if float(self._rmin) < float(self.arL[0]):
+            if not np.isnan(tofloat(self._rmin)) and (float(self._rmin) < float(self.arL[0])):
                 self.arL[0] = float(self._rmin)
             else:
                 self.arL[0] = self._format_label(float(self.arL[0]) - (float(self.arL[2]) - float(self.arL[1])) / 2.)
         if self.arL[-1] == self.arL[-2]:
-            if float(self._rmax) > float(self.arL[-1]):
+            if not np.isnan(tofloat(self._rmax)) and (float(self._rmax) > float(self.arL[-1])):
                 self.arL[-1] = float(self._rmax)
             else:
                 self.arL[-1] = self._format_label(float(self.arL[-1]) + (float(self.arL[-2]) - float(self.arL[-3])) / 2.)
@@ -360,6 +389,7 @@ class readQML():
 
     colmod = {0: 'Discrete', 1: 'Interpolated (Linear)', 2: 'Exact', 3: 'Paletted'}
     clamod = {0: 'N/A', 1: 'Continuous', 2: 'Equal interval', 3: 'Quantile'}
+    iwarning = 0
 
     def __init__(self, the_file, verbose=False):
         '''Variables.'''
@@ -413,13 +443,13 @@ class readQML():
     # --------------------------------------
 
     def _format_label(self, t):
-        ''' Format number with required number of decimals (self.deci). '''
+        '''Format number with required number of decimals (self.deci).'''
         #
         fmt = '%.' + str(self.deci) + 'f'
         try:
-            t = fmt % float(t)
+            t = fmt % float(t) if isfloat(t) else fmt % float(t.replace(',', '.'))
         except:
-            pass
+            self.iwarning += 1
         return t
     # --------------------------------------
 
@@ -934,7 +964,7 @@ class drawCBar():
         L = 0
         for e in ar:
             L = max(len(e), L)
-        my_svg = bc_svg(self.the_svg, titre, [self.titlefontsize*L, self.titlefontsize*len(ar)])
+        my_svg = bc_svg(self.the_svg, titre)
         if my_svg.is_init():
             if not my_svg.auto_process():
                 return my_svg.get_error()

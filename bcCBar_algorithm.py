@@ -259,6 +259,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
 
         if verbose:
             feedback.pushInfo(mycb.L_Verbose+'\n')
+            feedback.pushInfo('Float warnings: '+str(mycb.qml.iwarning)+'\n')
         mycb.close()
         if self._error != '':
             feedback.reportError(self._error+'\n', True)
