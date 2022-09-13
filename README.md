@@ -60,4 +60,4 @@ Add "https://www.geoproc.com/be/plugins.xml" to QGIS plugin repositories source 
 
 ---
 
-Last updated: 9 September 2022 - Version 3.24
+Last updated: 13 September 2022 - Version 3.25
