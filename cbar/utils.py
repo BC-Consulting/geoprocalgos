@@ -2,7 +2,7 @@
 """
 /***************************************************************************
         begin                : 2019-05-19
-        copyright            : (C) 2019-2022 by GeoProc.com
+        copyright            : (C) 2019-2023 by GeoProc.com
         email                : info@geoproc.com
  ***************************************************************************/
 
@@ -21,12 +21,19 @@
 WARNING: code formatting does not follow pycodestyle recommendations
 """
 
+import sys
 import codecs
+bbs4 = False
 try:
     from bs4 import BeautifulSoup
     bbs4 = True
 except:
-    bbs4 = False
+    try:
+        os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip.exe') + '" install lxml')
+        os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip.exe') + '" install bs4')
+    finally:
+        from bs4 import BeautifulSoup
+        bbs4 = True
 
 
 def get_dom(the_file, btxt=False):

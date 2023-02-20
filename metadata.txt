@@ -5,7 +5,7 @@
 name=geoprocAlgos
 qgisMinimumVersion=3.24
 description=Collection of Processing algorithms from GeoProc.com
-version=3.25
+version=3.30
 author=GeoProc.com
 email=info@geoproc.com
 about=A collection of Processing-based algorithms to facilitate various QGIS tasks.
@@ -14,9 +14,10 @@ repository=https://github.com/BC-Consulting/geoprocalgos
 # End of mandatory metadata
 
 # Recommended items:
-changelog=V3.25: fix bugs in CBar: unexpected i18n number formatting problems.
-    V3.24: fix bugs in CBar: type-conv for each entry, svg resizing, no png out.
-    V3.23: fix bugs in CBar.
+changelog=V3.30: Check dependencies and install if missing. Code clean-up.
+    V3.25: Fix bugs in CBar: unexpected i18n number formatting problems.
+    V3.24: Fix bugs in CBar: type-conv for each entry, svg resizing, no png out.
+    V3.23: Fix bugs in CBar.
     V3.22: Remove unavailable modules.
     V3.21: Polishing colourbar.
     V3.20: New colourbar algorithm with different options.

@@ -24,7 +24,7 @@ WARNING: code formatting does not follow pycodestyle recommendations
 
 __author__ = 'GeoProc.com'
 __date__ = '20122-04-27'
-__copyright__ = '(C) 2019-2022 by GeoProc.com'
+__copyright__ = '(C) 2019-2023 by GeoProc.com'
 __revision__ = '$Format:%H$'
 
 import os

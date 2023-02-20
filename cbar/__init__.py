@@ -2,7 +2,7 @@
 """
 /***************************************************************************
         begin                : 2022-04-10
-        copyright            : (C) 2022 by GeoProc.com
+        copyright            : (C) 2019-2022 by GeoProc.com
         email                : info@geoproc.com
  ***************************************************************************/
 
@@ -28,25 +28,34 @@ WARNING: code formatting does not follow pycodestyle recommendations
 """
 
 import os
+import sys
 # import shutil
 
 #   Test for dependencies -------------------------------------
+is_mpl_available = False
+is_bs4_available = False
 try:
     import matplotlib as mpl
     import numpy as np
     import matplotlib.pyplot as plt
     is_mpl_available = True
-    plt.rc('text', usetex=False)
-    mv = mpl.__version__.split('.')
-    if int(mv[0]) < 3 and int(mv[1]) < 5:
-        is_mpl_available = False
 except ImportError:
-    is_mpl_available = False
+    try:
+        os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip.exe') + '" install matplotlib')
+    finally:
+        import matplotlib as mpl
+        is_mpl_available = True
+#    is_mpl_available = False
 try:
     from bs4 import BeautifulSoup
     is_bs4_available = True
 except ImportError:
-    is_bs4_available = False
+    try:
+        os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip.exe') + '" install lxml')
+        os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip.exe') + '" install bs4')
+    finally:
+        from bs4 import BeautifulSoup
+        is_bs4_available = True
 
 try:
     from .svg_manip import bc_svg
@@ -72,7 +81,13 @@ try:
 except:
     is_QGIS_available = False
 
-__version__ = "3.25.2"
+if is_mpl_available:
+    plt.rc('text', usetex=False)
+    mv = mpl.__version__.split('.')
+    if int(mv[0]) < 3 and int(mv[1]) < 5:
+        is_mpl_available = False
+
+__version__ = "3.3.0"
 
 print('cbar version:', __version__)
 print('    is_mpl_available', is_mpl_available)

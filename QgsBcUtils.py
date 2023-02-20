@@ -3,6 +3,9 @@
 General QGIS utility functions
 
 @author: benoit
+        begin                : 2019-05-19
+        copyright            : (C) 2019-2023 by GeoProc.com
+        email                : info@geoproc.com
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -13,7 +16,9 @@ General QGIS utility functions
  ***************************************************************************/
 WARNING: code formatting does not follow pycodestyle recommendations
 """
-import os, codecs, re
+import os
+import codecs
+import re
 import numpy as np
 from qgis.PyQt.QtGui import QColor
 from qgis.core import (QgsColorRampShader as qRS,

@@ -23,6 +23,9 @@ Kind of object handled by routine:
     VectorLayer
 
 @author: benoit
+        begin                : 2019-05-19
+        copyright            : (C) 2019-2023 by GeoProc.com
+        email                : info@geoproc.com
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *

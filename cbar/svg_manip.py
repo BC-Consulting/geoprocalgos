@@ -5,7 +5,7 @@
                          Trim colour scalebar svg file
                               -------------------
         begin                : 2019-05-19
-        copyright            : (C) 2019-2022 by GeoProc.com
+        copyright            : (C) 2019-2023 by GeoProc.com
         email                : info@geoproc.com
  ***************************************************************************/
 
