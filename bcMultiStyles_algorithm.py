@@ -83,6 +83,9 @@ class bcMultiStylesAlgorithm(QgsProcessingAlgorithm):
              'Result file (*.htm)',
              'Do not use layer name as prefix (previously "Force")']
 
+    def flags(self):
+        return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
+
     def __init__(self):
         super().__init__()
     #-------------------------------------------------------------------------------------
