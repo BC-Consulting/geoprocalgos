@@ -1,11 +1,11 @@
-# This file contains metadata for geoProc processing algorithms.
+# This file contains metadata for GeoProc processing algorithms.
 
 # Mandatory items:
 [general]
 name=geoprocAlgos
 qgisMinimumVersion=3.24
 description=Collection of Processing algorithms from GeoProc.com
-version=3.30
+version=3.31
 author=GeoProc.com
 email=info@geoproc.com
 about=A collection of Processing-based algorithms to facilitate various QGIS tasks.
@@ -14,7 +14,8 @@ repository=https://github.com/BC-Consulting/geoprocalgos
 # End of mandatory metadata
 
 # Recommended items:
-changelog=V3.30: Check dependencies and install if missing. Code clean-up.
+changelog=V3.31: Correct links to help files. Multi-Style: change default behaviour and bug fixed by AlisterH.
+    V3.30: Check dependencies and install if missing. Code clean-up.
     V3.25: Fix bugs in CBar: unexpected i18n number formatting problems.
     V3.24: Fix bugs in CBar: type-conv for each entry, svg resizing, no png out.
     V3.23: Fix bugs in CBar.
@@ -38,7 +39,7 @@ changelog=V3.30: Check dependencies and install if missing. Code clean-up.
     V3.1 Fixed major bug in V3.0
     V3.0 Initial version includes bcCBar: colour scale bar for composer
 tags=processing,algorithms,composer,raster,print,legend,svg,png,one-band,oneband,1-band,python,colour,scalebar,scale,bar,qml,style,vector
-homepage=http://www.geoproc.com/free/geoprocalgos.htm
+homepage=http://www.geoproc.com/
 category=composer
 icon=GeoProc.png
 experimental=False

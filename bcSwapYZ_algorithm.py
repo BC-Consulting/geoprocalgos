@@ -46,7 +46,7 @@ is_dependencies_satisfied = True
 #-----------------------------------------------------------------------------------------
 plugin_path = os.path.dirname(__file__)
 
-the_url = 'http://www.geoproc.com/free/bcSwapYZ3.htm'
+the_url = 'https://www.geoproc.com/be/bcSwapYZ3.htm'
 help_string = help_bcSwapYZ
 the_tags = ['3D', '2D', 'swap', 'coordinates', 'y', 'z', 'vector']
 #-----------------------------------------------------------------------------------------

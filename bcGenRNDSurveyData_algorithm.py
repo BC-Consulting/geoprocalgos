@@ -56,7 +56,7 @@ from .HelpbcA import help_bcGeneS
 #-----------------------------------------------------------------------------------------
 plugin_path = os.path.dirname(__file__)
 
-the_url = 'http://www.geoproc.com/free/bcGenRNDSurveyData3.htm'
+the_url = 'https://www.geoproc.com/be/bcGenRNDSurveyData3.htm'
 help_string = help_bcGeneS
 the_tags = ['random','survey','data','noise','spike','orientation','line','tie']
 #-----------------------------------------------------------------------------------------

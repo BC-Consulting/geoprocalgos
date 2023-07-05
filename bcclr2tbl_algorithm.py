@@ -44,7 +44,7 @@ is_dependencies_satisfied = True
 #-----------------------------------------------------------------------------------------
 plugin_path = os.path.dirname(__file__)
 
-the_url = 'http://www.geoproc.com/free/bcclr2tbl3.htm'
+the_url = 'https://www.geoproc.com/be/bcclr2tbl3.htm'
 help_string = help_bcclr2tbl
 the_tags = ['colour','ramp','import','one band','raster','clr','surfer','golden software']
 #-----------------------------------------------------------------------------------------

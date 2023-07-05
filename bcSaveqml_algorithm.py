@@ -47,7 +47,7 @@ rlayers = QgsProcessing.TypeRaster
 vlayers = QgsProcessing.TypeVectorAnyGeometry
 plugin_path = os.path.dirname(__file__)
 
-the_url = 'http://www.geoproc.com/free/bcSaveqml3.htm'
+the_url = 'https://www.geoproc.com/be/bcSaveqml3.htm'
 help_string = help_bcSaveqml
 the_tags = ['qml','save','bulk','layer','style']
 #-----------------------------------------------------------------------------------------

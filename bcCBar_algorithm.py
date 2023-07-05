@@ -50,7 +50,7 @@ iswin = (sys.platform == 'win32') or (platform.system() == 'Windows')
 
 plugin_path = os.path.dirname(__file__)
 
-the_url = 'https://www.geoproc.com/free/bccbar4.htm'
+the_url = 'https://www.geoproc.com/be/bccbar4.htm'
 svg_note = """<p>"It is known that some vector graphics viewers (svg and pdf)
 renders white gaps between segments of the colorbar. This is due to bugs in the viewers,
 not Matplotlib."<br/>\n<em>source: https://matplotlib.org/api/_as_gen/matplotlib.pyplot.

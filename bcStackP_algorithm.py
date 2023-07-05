@@ -66,7 +66,7 @@ from .HelpbcA import help_bcStackP
 #-----------------------------------------------------------------------------------------
 plugin_path = os.path.dirname(__file__)
 
-the_url = 'http://www.geoproc.com/free/bcStackP3.htm'
+the_url = 'https://www.geoproc.com/be/bcStackP3.htm'
 help_string = help_bcStackP
 the_tags = ['geophysics','line','stacked','profile','vector','magnetic','electromagnetic',
             'gravity','electrical','radiometric','2D','survey']
