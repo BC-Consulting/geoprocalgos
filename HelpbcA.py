@@ -102,13 +102,14 @@ Where: <em>layerName</em> is the same name as the layer the qml relates to.
 
 * <b>Input layer</b> [required]: The layer to act on.
 * <b>Save</b> [required]: Save all styles in different qml files. Default False, implying a load operation.
-* <b>Force load</b>: If True try to load all qml's from directory. If False, load layer's qml sidecars. No effect if Save is True.
-* <b>qml Directory</b> [required]: Directory to load/save qml from/to.<br/>
+* <b>Do not use layer name as prefix</b>: If True try to load all qml's from directory, or save qmls without layer name prefix. If False, load only layer's qml sidecars, or save as sidecars i.e. with layer name as a prefix.
+* <b>qml Directory</b> [optional]: Directory to load/save qml from/to.  By default the directory containing the layer will be used.<br/>
 * <b>Output Result file</b> [optional]: A HTML file showing the results of the operation. Leave empty to save to Layer source directory.<br/>
 
 If <em>Save</em> is True each layer's style is saved to its own qml.
 If <em>Save</em> is False (default) qml's are read from files and added to the layer's Style Manager.
-If <em>Force load</em> is False, only sidecar qml's following the above naming convention are loaded. Otherwise all qml's in the directory are loaded, if possible.
+If <em>Do not use layer name as prefix</em> is False when loading, only sidecar qml's following the above naming convention are loaded. Otherwise all qml's in the directory are loaded, if possible.  
+If <em>Do not use layer name as prefix</em> is False when saving, sidecar qml's are created (i.e. the style name is prefixed by the layer name).  Otherwise qml's are named using only the style name.
 
 <b>NOTE</b>
 If one of the styles is named 's', then there is a problem! This is because the algorithm is created for geophysics workflows where the suffix '_s' is appended to sunshaded grid of product of the same name.

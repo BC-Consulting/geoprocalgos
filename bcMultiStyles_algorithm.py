@@ -81,7 +81,10 @@ class bcMultiStylesAlgorithm(QgsProcessingAlgorithm):
              'qml directory',
              'Output Result file',
              'Result file (*.htm)',
-             'Force load']
+             'Do not use layer name as prefix (previously "Force")']
+
+    def flags(self):
+        return super().flags() | QgsProcessingAlgorithm.FlagNoThreading
 
     def __init__(self):
         super().__init__()
@@ -96,7 +99,7 @@ class bcMultiStylesAlgorithm(QgsProcessingAlgorithm):
         self.the_params = {
            self.THE_LAYER: [1,self._pstr[0],'MLayer',{},False],
            self.IS_SAVE:   [2,self._pstr[1],'Bool',{'defaultValue':False},False],
-           self.IS_FORCE:  [3,self._pstr[5],'Bool',{'defaultValue':False},True],
+           self.IS_FORCE:  [3,self._pstr[5],'Bool',{'defaultValue':False},False],
            self.QML_DIR:   [4,self._pstr[2],'FolderDestination',{},True],
            self.OUTPUT:    [1001,self._pstr[3],'FileDestination',
                             {'FILTER':self._pstr[4],'defaultValue':self._default_output},
@@ -199,12 +202,15 @@ class bcMultiStylesAlgorithm(QgsProcessingAlgorithm):
                 feedback.setProgress(int(current * total) + 10.)
                 #
                 style_manager.setCurrentStyle(style_name)
-                the_qml = os.path.join(qml_path, the_layer.name()+'_'+style_name+".qml")
+                if is_force:
+                    the_qml = os.path.join(qml_path, style_name+".qml")
+                else:
+                    the_qml = os.path.join(qml_path, the_layer.name()+'_'+style_name+".qml")
                 _, flg = the_layer.saveNamedStyle(the_qml)
                 if flg:
-                    self._results+='%s: %s<br/>\n' % (style_name, self._the_strings['O1'])
+                    self._results+='%s: %s<br/>\n' % (the_qml, self._the_strings['O1'])
                 else:
-                    self._results+='%s: %s<br/>\n' % (style_name, self._the_strings['N1'])
+                    self._results+='%s: %s<br/>\n' % (the_qml, self._the_strings['N1'])
         #
         else:
             # Load from files  -  format should be: LayerName_StyleName.qml
