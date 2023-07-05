@@ -103,7 +103,7 @@ Where: <em>layerName</em> is the same name as the layer the qml relates to.
 * <b>Input layer</b> [required]: The layer to act on.
 * <b>Save</b> [required]: Save all styles in different qml files. Default False, implying a load operation.
 * <b>Do not use layer name as prefix</b>: If True try to load all qml's from directory, or save qmls without layer name prefix. If False, load only layer's qml sidecars, or save as sidecars i.e. with layer name as a prefix.
-* <b>qml Directory</b> [optional]: Directory to load/save qml from/to.  If set to [Skip output] the directory containing the layer will be used.<br/>
+* <b>qml Directory</b> [optional]: Directory to load/save qml from/to.  By default the directory containing the layer will be used.<br/>
 * <b>Output Result file</b> [optional]: A HTML file showing the results of the operation. Leave empty to save to Layer source directory.<br/>
 
 If <em>Save</em> is True each layer's style is saved to its own qml.
