@@ -44,6 +44,7 @@ class thelists(object):
     """ Return some info from current algorithms used to build menu/toolbar. """
     #
     # algorithms to load
+    # IMPORTANT: add/remove them from geoprocProvider.loadAlgorithms()
     alglist = [bcCBarAlgorithm(),
                bcclr2tblAlgorithm(),
                bcStackPAlgorithm(),
@@ -77,7 +78,8 @@ class geoprocProvider(QgsProcessingProvider):
     def __init__(self):
         """ Initialisation. """
         #
-        super().__init__()
+#        super().__init__()
+        QgsProcessingProvider.__init__(self)
         self.alglist = thelists.alglist
     #-------------------------------------------------------------------------------------
 
@@ -104,8 +106,19 @@ class geoprocProvider(QgsProcessingProvider):
     def loadAlgorithms(self):
         """ Loads all algorithms belonging to this provider. """
         #
-        for alg in self.alglist:
-            self.addAlgorithm( alg )
+        # NEVER EVER use a loop to load them:
+        # for alg in self.alglist:       NO!
+        #     self.addAlgorithm( alg )   NO!
+        # If you do that, any call to Settings will generate the following error:
+        #  RuntimeError: wrapped C/C++ object of type bcGeoprocAlgos has been deleted
+        #
+        self.addAlgorithm(bcCBarAlgorithm())
+        self.addAlgorithm(bcclr2tblAlgorithm())
+        self.addAlgorithm(bcStackPAlgorithm())
+        self.addAlgorithm(bcSwapYZAlgorithm())
+        self.addAlgorithm(bcSaveqmlAlgorithm())
+        self.addAlgorithm(bcMultiStylesAlgorithm())
+        self.addAlgorithm(bcGenRNDSurveyDataAlgorithm())
     #-------------------------------------------------------------------------------------
 
     def id(self):

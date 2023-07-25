@@ -56,6 +56,7 @@ class bcSaveqmlAlgorithm(QgisAlgorithm):
     ''' Processing wrapper for the save qml algorithm. '''
     #
     # Parameters used
+    __bcname__ = 'bcSaveqml3'
     THE_VLAYERS = 'THE_VLAYERS'
     THE_RLAYERS = 'THE_RLAYERS'
     OUTPUT      = 'OUTPUT'

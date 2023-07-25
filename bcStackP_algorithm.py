@@ -76,6 +76,7 @@ class bcStackPAlgorithm(QgsProcessingAlgorithm):
     ''' Processing wrapper for the colour scale bar algorithm. '''
     #
     # Parameters used for stacking profiles
+    __bcname__ = 'bcStackP3'
     THE_LAYER = 'THE_LAYER'
     FID_FLD   = 'FID_FLD'
     DATA_FLD  = 'DATA_FLD'

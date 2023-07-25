@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 /***************************************************************************
- bcCBar3
+ bcCBar4
                            A QGIS Processing algorithm
                       Create a colour bar for Composer
 
@@ -64,6 +64,7 @@ class bcCBarAlgorithm(QgsProcessingAlgorithm):
     ''' Processing wrapper for the colour scale bar algorithm. '''
     #
     # Parameters used for drawing the colour scale bar
+    __bcname__ = 'bcCBar4'
     THE_LAYER     = 'THE_LAYER'
     ORI           = 'ORI'
     TITLE         = 'TITLE'

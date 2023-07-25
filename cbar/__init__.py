@@ -2,7 +2,7 @@
 """
 /***************************************************************************
         begin                : 2022-04-10
-        copyright            : (C) 2019-2022 by GeoProc.com
+        copyright            : (C) 2019-2023 by GeoProc.com
         email                : info@geoproc.com
  ***************************************************************************/
 
@@ -45,16 +45,16 @@ except ImportError:
     finally:
         import matplotlib as mpl
         is_mpl_available = True
-#    is_mpl_available = False
+
 try:
-    from bs4 import BeautifulSoup
+    from bs4 import BeautifulSoup, __version__ as bs4_version
     is_bs4_available = True
 except ImportError:
     try:
         os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip.exe') + '" install lxml')
         os.system('"' + os.path.join(sys.prefix, 'scripts', 'pip.exe') + '" install bs4')
     finally:
-        from bs4 import BeautifulSoup
+        from bs4 import BeautifulSoup, __version__ as bs4_version
         is_bs4_available = True
 
 try:
@@ -87,70 +87,71 @@ if is_mpl_available:
     if int(mv[0]) < 3 and int(mv[1]) < 5:
         is_mpl_available = False
 
-__version__ = "3.3.0"
+__version__ = "3.3.1"
 
+#==========================================================================
 print('cbar version:', __version__)
-print('    is_mpl_available', is_mpl_available)
-print('    is_bs4_available', is_bs4_available)
-print('    is_QGIS_available', is_QGIS_available)
+if is_mpl_available:
+    print('    is_mpl_available: %s [Version: %s]' % (str(is_mpl_available), str(mpl.__version__)))
+else:
+    print('    is_mpl_available: False')
+if is_bs4_available:
+    print('    is_bs4_available %s [Version: %s]' % (str(is_bs4_available), str(bs4_version)))
+else:
+    print('    is_bs4_available: False')
+print('    is_QGIS_available:', is_QGIS_available)
+#==========================================================================
 
 if not is_QGIS_available:
-    __str1 =  'QML file'
-    __str2 = "<br />   &nbsp; &nbsp; &nbsp; If a QML file, it must be a QGIS V3.x file"
-    __str3 = 'qml file'
-    __str4 = """<b>titlefontname</b>: [str] font name/family: FONTNAME or one of {serif, sans-serif*, cursive, fantasy, monospace}<br />
-<b>titlefontsize</b>: [str|int] title font size (28*) number or one of:<br />
+    cbar_usage = '''<h1>Usage</h1>
+<p><b>QGIS V3.x qml</b> [required]: Click 'Change' to select the QML style file to draw colour bar from.<br />
+<b>Output cbar svg</b> [optional]: Click 'Change' to define the path and name of the SVG colour bar result.<br />
+   &nbsp; &nbsp; &nbsp; If SVG is not defined the QML file name is used to set the SVG name.</p></p>
+<hr />
+<h2><font color="#600">Optional parameters:-</font></h2>
+<h3><font color="#006">Colour bar:</font></h3>
+<b>Length</b>: [float] colour bar height (0.75)<br />
+<b>width</b>: [float] colour bar width (15)<br />
+<p><b>orientation</b>: [str] ('horizontal'* | 'vertical'): colour bar orientation<br />
+<!-- <b>spacing</b>: [str] ('uniform'* | 'proportional'): colour boxes lengths<br /> -->
+<b>Draw colour edges</b>: [bool] draw box around each colour (False)<br />
+<b>Reverse colour bar</b>: [bool] reverse the direction of the colour bar (False)</p>
+<hr />
+<h3><font color="#006">Title:</font></h3>
+<p><b>Title</b>: [str] colour bar label ('')<br />
+   &nbsp; &nbsp; &nbsp; (use \\n for line break. Use $...$ TeX notation for math expressions)<br />
+<b>Title font name</b>: [str] font name/family: FONTNAME or one of {serif, sans-serif*, cursive, fantasy, monospace}<br />
+<b>Title font size</b>: [str|int] title font size (28*) number or one of:<br />
    &nbsp; &nbsp; &nbsp; {xx-small, x-small, small, medium, large, x-large, xx-large}<br />
-<b>titlefontweight</b>: [str|int] title font weight: number [0, 1000] or one of:<br />
+<b>Title font weight</b>: [str|int] title font weight: number [0, 1000] or one of:<br />
    &nbsp; &nbsp; &nbsp; {ultralight, light, normal, demibold, bold*, extra bold}<br />
-"""
-    __str5 = "<b>tickfontsize</b>: [str|int] tick label font size (16) or one of the above<br />"
-    __str6 = """<h3><font color="#006">Ticks and labels position:</font></h3>
+<b>Title colour</b>: [str] title font colour: [k*|r|g|b|c|m|y] or "#RRGGBBAA" or colour name</p>
+<hr />
+<h3><font color="#006">Ticks and labels parameters:</font></h3>
+<p><b>Tick label font size</b>: [str|int] tick label font size (16) or one of the above<br />
+<b>Tick label colour</b>: [str] ticks/labels font colour: [k*|r|g|b|c|m|y] or "#RRGGBBAA" or colour name<br />
+<b>tick separation</b>: [+int] show label every `tick separation` ticks (-5)<br />
+ &nbsp; &nbsp; &nbsp; can also be:<br />
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -1: to set tickstep to 1 or 4 depending on colourbar length<br />
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -3: to set 3 (min, half, max) ticks<br />
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -5*: to set 3 (min, half, max) or 5 ticks (min, 1/4, 1/2, 3/4, max)<br />
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; depending on number of colours<br />
+<b>Decimal places</b>: [positive int] number of decimal places for tick labels (3)<br />
+<b>Tick length</b>: [float] tick length (8)</p>
+<h4><font color="#006">Ticks/Labels position:</font></h4>
 <p><b>top</b>: [bool] show thicks/label on top of horizontal colour bar (False)<br />
 <b>bottom</b>: [bool] show thicks/label at bottom of horizontal colour bar (True)<br />
 <b>left</b>: [bool] show thicks/label on left of vertical colour bar (True)<br />
-<b>right</b>: [bool] show thicks/label on right of vertical colour bar (False)</p>
-"""
-    cbar_usage = '''<h1>Usage</h1>
-<p><b>qml_file</b>: [str] full name of the %s to draw colour bar from.%s</p>
-<hr />
-<h2><font color="#600">Optional parameters:-</font></h2>
-<p><b>svg_file</b>: [str] (None) name of the svg file storing the colour bar.<br />
-   &nbsp; &nbsp; &nbsp; If None (default) the %s is used to set the svg name.</p>
-<h3><font color="#006">Colour bar:</font></h3>
-<p><b>orientation</b>: [str] ('horizontal'* | 'vertical'): colour bar orientation<br />
-<b>spacing</b>: [str] ('uniform'* | 'proportional'): colour boxes lengths<br />
-<b>width</b>: [float] colour bar width (15)<br />
-<b>height</b>: [float] colour bar height (0.75)<br />
-<b>drawedges</b>: [bool] draw box around each colour (False)<br />
-<b>inverted</b>: [bool] reverse the direction of the colour bar (False)</p>
-<hr />
-<h3><font color="#006">Title:</font></h3>
-<p><b>title</b>: [str] colour bar label ('')<br />
-%s
-<b>titlecolo</b>: [str] title font colour: [k*|r|g|b|c|m|y] or "#RRGGBBAA" or colour name</p>
-<hr />
-<h3><font color="#006">Ticks and label:</font></h3>
-<p><b>tickstep</b>: [int] show label every `ticksteps` ticks (4)<br />
- &nbsp; &nbsp; &nbsp; can be:<br />
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -1: to set tickstep to 1 or 4 depending on colourbar length<br />
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -3: to set 3 (min, half, max) ticks<br />
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -5: to set 3 (min, half, max) or 5 ticks (min, 1/4, 1/2, 3/4, max)<br />
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; depending on number of colours<br />
-<b>decimal</b>: [int] decimal places for tick labels (3)<br />
-%s
-<b>tickcolo</b>: [str] ticks/labels font colour: [k*|r|g|b|c|m|y] or "#RRGGBBAA" or colour name<br />
-<b>ticklength</b>: [float] tick length (8)</p>
-%s
-<hr />
-<h3><font color="#006">Tweaking:</font></h3>
-<p><b>tweak_end_replace</b>: [bool] replace last tick with end value (True)<br />
-<b>tweak_end_add</b>: [bool] add end value to ticks array (False)</p>
+<b>right</b>: [bool] show thicks/label on right of vertical colour bar (False)</p><hr />
+<h3><font color="#006">Tweak ticks:</font></h3>
+<p><b>None</b>: do not show any tick/label<br />
+<b>Replace last tick</b>: [bool] replace last tick with end value (True)<br />
+<b>Add end tick</b>: [bool] add end value to ticks array (False)</p>
 <h3><font color="#006">Debug parameter:</font></h3>
-<p><b>verbose</b>: [bool] (False) print information about the colours and ticks</p>
+<p><b>Verbose</b>: [bool] (False) print information about the colours and ticks</p>
 <p>&nbsp;</p>
 <p>*: default value</p>
-''' % (__str1, __str2, __str3, __str4, __str5, __str6)
+'''
 else:
     cbar_usage = """
 <i>Generate a colour scalebar (cbar) from a one-band raster for use in Composer</i>
@@ -731,17 +732,11 @@ class drawCBar():
         # Colour bar visual parameters
         #
         # Colour bar orientation and size
-        self.ori = 'horizontal' if 'orientation' not in kw else str(kw['orientation']).lower()
-        if self.ori == 'v':
-            self.ori = 'vertical'
-        if self.ori != 'vertical':
-            self.ori = 'horizontal'
+        self.ori = 'h' if 'orientation' not in kw else str(kw['orientation'])[0].lower()
+        self.ori = 'horizontal' if self.ori != 'v' else 'vertical'
         # Colour boxes lengths
-        self.spacing = 'uniform' if 'spacing' not in kw else str(kw['spacing']).lower()
-        if self.spacing == 'p':
-            self.spacing = 'proportional'
-        if self.spacing != 'proportional':
-            self.spacing = 'uniform'
+        self.spacing = 'u' if 'spacing' not in kw else str(kw['spacing'])[0].lower()
+        self.spacing = 'uniform' if self.spacing != 'p' else 'proportional'
         # Colour bar dimensions
         self.width = 15. if 'width' not in kw else float(kw['width'])
         self.height = 0.75 if 'height' not in kw else float(kw['height'])
@@ -778,6 +773,9 @@ class drawCBar():
         # Tweaking
         self.tweak_end_replace = True if 'tweak_end_replace' not in kw else bool(kw['tweak_end_replace'])
         self.tweak_end_add = False if 'tweak_end_add' not in kw else bool(kw['tweak_end_add'])
+        #
+        # Who is calling
+        self.sourcepg = 'geoprocalgos' if 'source_pg' not in kw else 'CBar4'
     # ----------------------------------------------------------------------------------------
 
     def close(self):
@@ -813,6 +811,10 @@ class drawCBar():
                 b = True
             else:
                 self.err = status
+        else:
+            self.err = 'Error while creating colorbar (doCB).'
+            if not self.verbose:
+                self.err += '\nPlease re-run with Verbose flag on and\nopen a ticket with the log info on:\nhttps://github.com/BC-Consulting/%s/issues.' % self.sourcepg
         #
         return b
     # ----------------------------------------------------------------------------------------
@@ -887,7 +889,7 @@ class drawCBar():
         if self.ori[0] == 'v' and self.width > self.height:
             self.width, self.height = self.height-.25, self.width
         #
-        fig, ax = plt.subplots(figsize=(self.width, self.height), constrained_layout=True)
+        fig, ax = plt.subplots(figsize=(self.width, self.height))   # , constrained_layout=True)
         if self.height >= 0.75 and self.ori[0] == 'h':
             fig.subplots_adjust(bottom=0.5)
         #
@@ -944,7 +946,12 @@ class drawCBar():
             self.L_Verbose += 'Ticks location: %s\nTicks label: %s\n' % (', '.join(map(str, ticksloc)), ', '.join(labels))
             self.L_Verbose += '      len: Bo %d, Ti %d, pos %d, lab %d\n' % (len(bounds), len(idx), len(ticksloc), len(labels))
         #
-        scb.set_ticks(ticksloc, labels=labels, fontfamily=self.family, fontsize=self.tickfontsize)
+        try:
+            scb.set_ticks(ticksloc, labels=labels, fontfamily=self.family, fontsize=self.tickfontsize)
+        except Exception as e:
+            if self.verbose:
+                self.L_Verbose += '\nERROR [cbar/_init_/py:950]: %s\n' % e
+            return False
         #
         if self.ori[0] == 'h':
             scb.ax.axes.tick_params(bottom=self.bbottom, top=self.btop, labelbottom=self.bbottom, labeltop=self.btop, length=self.tz, colors=self.tickcolo)
@@ -962,23 +969,25 @@ class drawCBar():
     # ----------------------------------------------------------------------------------------
 
     def __save2SVG(self):
-        ''' Save matplotlib figure (fig) to svg file (svgf).'''
+        '''Save matplotlib figure (self.fig) to svg file (self.the_svg).'''
         #
         self.fig.savefig(self.the_svg, transparent=True, dpi=300)   # , pad_inches='tight')
         # shutil.copyfile(self.the_svg, os.path.splitext(self.the_svg)[0]+'_ori.svg')
-#        try:
-#            self.fig.savefig(os.path.splitext(self.the_svg)[0]+'.png', transparent=True, dpi=300)
-#        except:
-#            pass
+        if self.sourcepg == 'CBar4':
+            try:
+                self.fig.savefig(os.path.splitext(self.the_svg)[0]+'.png', transparent=True, dpi=300, pad_inches='tight')
+            except:
+                pass
         #
         titre = os.path.splitext(os.path.split(self.the_svg)[1])[0]
         titre += ' - Ramp type: %s, Classification mode: %s, Number colours: %d' % (
                   self.qml.colmod[self.qml.nMode], self.qml.clamod[self.qml.cm], self.qml.nC)
-        # Resize svg file to colourbar content
+        # ??
         ar = self.label.split('\n')
         L = 0
         for e in ar:
             L = max(len(e), L)
+        # Resize svg file to colourbar content
         my_svg = bc_svg(self.the_svg, titre)
         if my_svg.is_init():
             if not my_svg.auto_process():

@@ -51,6 +51,7 @@ the_tags = ['qml','style','multi','layer','save','load']
 class bcMultiStylesAlgorithm(QgsProcessingAlgorithm):
     ''' Processing wrapper. '''
     #
+    __bcname__ = 'bcMultiStyles3'
     THE_LAYER = 'THE_LAYER'
     IS_SAVE   = 'IS_SAVE'
     IS_FORCE  = 'IS_FORCE'

@@ -52,6 +52,7 @@ the_tags = ['colour','ramp','import','one band','raster','clr','surfer','golden 
 class bcclr2tblAlgorithm(QgsProcessingAlgorithm):
     ''' Processing wrapper. '''
     #
+    __bcname__ = 'bcclr2tbl3'
     THE_LAYER = 'THE_LAYER'
     THE_CLR   = 'THE_CLR'
     OUTPUT    = 'OUTPUT'

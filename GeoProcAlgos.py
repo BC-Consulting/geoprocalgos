@@ -82,7 +82,7 @@ class PPlugins(QObject):
             self.iface.removePluginMenu(u"&GeoProc", action)
         parent = self.toolbar.parentWidget()
         parent.removeToolBar(self.toolbar)
-        
+
     def run(self):
         algo = self.sender().text()
         processing.execAlgorithmDialog("GeoProc:"+self.algos[algo])

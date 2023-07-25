@@ -64,6 +64,7 @@ the_tags = ['random','survey','data','noise','spike','orientation','line','tie']
 class bcGenRNDSurveyDataAlgorithm(QgsProcessingAlgorithm):
     ''' Processing wrapper. '''
     #
+    __bcname__ = 'bcGenRNDSurveyData3'
     NLINES    = 'NLINES'
     NPOINTS   = 'NPOINTS'
     EXTENT    = 'EXTENT'

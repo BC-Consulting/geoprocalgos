@@ -54,6 +54,7 @@ the_tags = ['3D', '2D', 'swap', 'coordinates', 'y', 'z', 'vector']
 class bcSwapYZAlgorithm(QgsProcessingAlgorithm):
     ''' Processing wrapper. '''
     #
+    __bcname__ = 'bcSwapYZ3'
     THE_LAYER = 'THE_LAYER'
     Y_VALUE   = 'Y_VALUE'
     OUTPUT    = 'OUTPUT'

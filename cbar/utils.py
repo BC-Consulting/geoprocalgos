@@ -23,6 +23,7 @@ WARNING: code formatting does not follow pycodestyle recommendations
 
 import sys
 import codecs
+import warnings
 bbs4 = False
 try:
     from bs4 import BeautifulSoup
@@ -66,7 +67,9 @@ def get_dom(the_file, btxt=False):
     buff = buff.replace(' ]', ']')
     buff = buff.replace('[ ', '[')
     try:
-        dom = BeautifulSoup(buff, "lxml")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            dom = BeautifulSoup(buff, "lxml")
     except:
         raise
     #
